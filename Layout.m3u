@@ -1,0 +1,319 @@
+#EXTM3U
+#EXTINF:-1 tvg-chno="1" tvg-id="3ABN.Canada.Network.ca" tvg-name="##### ENGLISH #####" tvg-logo="http://103.176.90.118/picons/logos/logos/CANADA.png" group-title="CA| ENGLISH",##### ENGLISH #####
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1028649.ts
+#EXTINF:-1 tvg-chno="2" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| A&E HD" tvg-logo="http://103.176.90.92/picons/176861.png" group-title="CA| ENGLISH",CA| A&E HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176861.ts
+#EXTINF:-1 tvg-chno="3" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| ABC EAST HD" tvg-logo="http://103.176.90.92/picons/176793.png" group-title="CA| ENGLISH",CA| ABC EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176793.ts
+#EXTINF:-1 tvg-chno="4" tvg-id="ABC.Spark.ca" tvg-name="CA| ABC SPARK HD" tvg-logo="http://103.176.90.92/picons/1458074.png" group-title="CA| ENGLISH",CA| ABC SPARK HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1458074.ts
+#EXTINF:-1 tvg-chno="5" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| ABC WEST HD" tvg-logo="http://103.176.90.92/picons/176794.png" group-title="CA| ENGLISH",CA| ABC WEST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176794.ts
+#EXTINF:-1 tvg-chno="6" tvg-id="Adult.Swim.-.East.HD.ca" tvg-name="CA| ADULT SWIM HD" tvg-logo="http://103.176.90.92/picons/176862.png" group-title="CA| ENGLISH",CA| ADULT SWIM HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176862.ts
+#EXTINF:-1 tvg-chno="7" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| AHC HD" tvg-logo="http://103.176.90.92/picons/176863.png" group-title="CA| ENGLISH",CA| AHC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176863.ts
+#EXTINF:-1 tvg-chno="8" tvg-id="Al.Jazeera.English.ca" tvg-name="CA| AL JAZEERA ENGLISH HD" tvg-logo="http://103.176.90.92/picons/176795.png" group-title="CA| ENGLISH",CA| AL JAZEERA ENGLISH HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176795.ts
+#EXTINF:-1 tvg-chno="9" tvg-id="AMC.-.Canada.ca" tvg-name="CA| AMC HD" tvg-logo="http://103.176.90.118/picons/logos/USA/AMC.png" group-title="CA| ENGLISH",CA| AMC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176864.ts
+#EXTINF:-1 tvg-chno="10" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| ANIMAL PLANET HD" tvg-logo="http://103.176.90.92/picons/176865.png" group-title="CA| ENGLISH",CA| ANIMAL PLANET HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176865.ts
+#EXTINF:-1 tvg-chno="11" tvg-id="APTN.HD.ca" tvg-name="CA| APTN HD" tvg-logo="http://103.176.90.92/picons/176831.png" group-title="CA| ENGLISH",CA| APTN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176831.ts
+#EXTINF:-1 tvg-chno="12" tvg-id="BBC.Canada.East.ca" tvg-name="CA| BBC CANADA" tvg-logo="http://103.176.90.92/picons/176796.png" group-title="CA| ENGLISH",CA| BBC CANADA
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176796.ts
+#EXTINF:-1 tvg-chno="13" tvg-id="BBC.Earth.HD.ca" tvg-name="CA| BBC EARTH HD" tvg-logo="http://103.176.90.92/picons/176867.png" group-title="CA| ENGLISH",CA| BBC EARTH HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176867.ts
+#EXTINF:-1 tvg-chno="14" tvg-id="BBC.First.HD.ca" tvg-name="CA| BBC FIRST HD" tvg-logo="http://103.176.90.92/picons/176826.png" group-title="CA| ENGLISH",CA| BBC FIRST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176826.ts
+#EXTINF:-1 tvg-chno="15" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| BBC WORLD NEWS HD" tvg-logo="http://103.176.90.92/picons/176797.png" group-title="CA| ENGLISH",CA| BBC WORLD NEWS HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176797.ts
+#EXTINF:-1 tvg-chno="16" tvg-id="CBET.Windsor.(CBET).ca" tvg-name="CA| BET HD" tvg-logo="http://103.176.90.92/picons/176868.png" group-title="CA| ENGLISH",CA| BET HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176868.ts
+#EXTINF:-1 tvg-chno="17" tvg-id="BNN.Bloomberg.ca" tvg-name="CA| BLOOMBERG HD" tvg-logo="http://103.176.90.92/picons/176799.png" group-title="CA| ENGLISH",CA| BLOOMBERG HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176799.ts
+#EXTINF:-1 tvg-chno="18" tvg-id="CNN.ca" tvg-name="CA| BNN HD" tvg-logo="http://103.176.90.92/picons/176798.png" group-title="CA| ENGLISH",CA| BNN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176798.ts
+#EXTINF:-1 tvg-chno="19" tvg-id="OUTtv.ca" tvg-name="CA| BOOK TV" tvg-logo="http://103.176.90.92/picons/176909.png" group-title="CA| ENGLISH",CA| BOOK TV
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176909.ts
+#EXTINF:-1 tvg-chno="20" tvg-id="BBC.Earth.HD.ca" tvg-name="CA| CBC EAST HD" tvg-logo="http://103.176.90.92/picons/176800.png" group-title="CA| ENGLISH",CA| CBC EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176800.ts
+#EXTINF:-1 tvg-chno="21" tvg-id="CITY.Montreal,.QC.ca" tvg-name="CA| CBC MONTREAL HD" tvg-logo="http://103.176.90.92/picons/177280.png" group-title="CA| ENGLISH",CA| CBC MONTREAL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/177280.ts
+#EXTINF:-1 tvg-chno="22" tvg-id="ABP.News.ca" tvg-name="CA| CBC NEWS HD" tvg-logo="http://103.176.90.92/picons/176801.png" group-title="CA| ENGLISH",CA| CBC NEWS HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176801.ts
+#EXTINF:-1 tvg-chno="23" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CBS EAST HD" tvg-logo="http://103.176.90.92/picons/176802.png" group-title="CA| ENGLISH",CA| CBS EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176802.ts
+#EXTINF:-1 tvg-chno="24" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CBS WEST HD" tvg-logo="http://103.176.90.92/picons/176803.png" group-title="CA| ENGLISH",CA| CBS WEST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176803.ts
+#EXTINF:-1 tvg-chno="25" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CHCH HD" tvg-logo="http://103.176.90.92/picons/176808.png" group-title="CA| ENGLISH",CA| CHCH HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176808.ts
+#EXTINF:-1 tvg-chno="26" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CITY MONTREAL HD" tvg-logo="http://103.176.90.118/picons/logos/CITY-TV-MONTREAL-HD.png" group-title="CA| ENGLISH",CA| CITY MONTREAL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/177283.ts
+#EXTINF:-1 tvg-chno="27" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CITY TV 2 HD" tvg-logo="http://103.176.90.92/picons/176807.png" group-title="CA| ENGLISH",CA| CITY TV 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176807.ts
+#EXTINF:-1 tvg-chno="28" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CITY TV HD" tvg-logo="http://103.176.90.92/picons/176806.png" group-title="CA| ENGLISH",CA| CITY TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176806.ts
+#EXTINF:-1 tvg-chno="29" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CITYNEWS 24/7" tvg-logo="http://103.176.90.92/picons/176880.png" group-title="CA| ENGLISH",CA| CITYNEWS 24/7
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176880.ts
+#EXTINF:-1 tvg-chno="30" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CMT HD" tvg-logo="http://103.176.90.92/picons/176872.png" group-title="CA| ENGLISH",CA| CMT HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176872.ts
+#EXTINF:-1 tvg-chno="31" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CNBC HD" tvg-logo="http://103.176.90.92/picons/176804.png" group-title="CA| ENGLISH",CA| CNBC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176804.ts
+#EXTINF:-1 tvg-chno="32" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CNN NEWS HD" tvg-logo="http://103.176.90.92/picons/176809.png" group-title="CA| ENGLISH",CA| CNN NEWS HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176809.ts
+#EXTINF:-1 tvg-chno="33" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| COOKING CHANNEL HD" tvg-logo="http://103.176.90.92/picons/176889.png" group-title="CA| ENGLISH",CA| COOKING CHANNEL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176889.ts
+#EXTINF:-1 tvg-chno="34" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| COTTAGE LIFE HD" tvg-logo="http://103.176.90.92/picons/176873.png" group-title="CA| ENGLISH",CA| COTTAGE LIFE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176873.ts
+#EXTINF:-1 tvg-chno="35" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CP24" tvg-logo="http://103.176.90.92/picons/365712.png" group-title="CA| ENGLISH",CA| CP24
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/365712.ts
+#EXTINF:-1 tvg-chno="36" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CP24 HD" tvg-logo="http://103.176.90.92/picons/176805.png" group-title="CA| ENGLISH",CA| CP24 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176805.ts
+#EXTINF:-1 tvg-chno="37" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CPAC HD" tvg-logo="http://103.176.90.92/picons/176811.png" group-title="CA| ENGLISH",CA| CPAC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176811.ts
+#EXTINF:-1 tvg-chno="38" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CRAVE 1 HD" tvg-logo="http://103.176.90.92/picons/176936.png" group-title="CA| ENGLISH",CA| CRAVE 1 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176936.ts
+#EXTINF:-1 tvg-chno="39" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CRAVE 2 HD" tvg-logo="http://103.176.90.92/picons/176937.png" group-title="CA| ENGLISH",CA| CRAVE 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176937.ts
+#EXTINF:-1 tvg-chno="40" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CRAVE 3 HD" tvg-logo="http://103.176.90.118/picons/logos/USA/CRAVE.png" group-title="CA| ENGLISH",CA| CRAVE 3 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176938.ts
+#EXTINF:-1 tvg-chno="41" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CRAVE 4 HD" tvg-logo="http://103.176.90.118/picons/logos/USA/CRAVE.png" group-title="CA| ENGLISH",CA| CRAVE 4 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176939.ts
+#EXTINF:-1 tvg-chno="42" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CRIME & INVESTIGATION HD" tvg-logo="http://103.176.90.92/picons/176874.png" group-title="CA| ENGLISH",CA| CRIME & INVESTIGATION HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176874.ts
+#EXTINF:-1 tvg-chno="43" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV 2 BARRIE HD" tvg-logo="http://103.176.90.118/picons/logos/USA/CTV-2-BARRIE.png" group-title="CA| ENGLISH",CA| CTV 2 BARRIE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1040103.ts
+#EXTINF:-1 tvg-chno="44" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV 2 HD" tvg-logo="http://103.176.90.92/picons/176813.png" group-title="CA| ENGLISH",CA| CTV 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176813.ts
+#EXTINF:-1 tvg-chno="45" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV COMEDY CHANNEL HD" tvg-logo="http://103.176.90.92/picons/176815.png" group-title="CA| ENGLISH",CA| CTV COMEDY CHANNEL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176815.ts
+#EXTINF:-1 tvg-chno="46" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV COMEDY CHANNEL WEST HD" tvg-logo="http://103.176.90.92/picons/176816.png" group-title="CA| ENGLISH",CA| CTV COMEDY CHANNEL WEST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176816.ts
+#EXTINF:-1 tvg-chno="47" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV DRAMA CHANNEL HD" tvg-logo="http://103.176.90.118/picons/logos/USA/CTV-DRAMA-CHANNEL.png" group-title="CA| ENGLISH",CA| CTV DRAMA CHANNEL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176817.ts
+#EXTINF:-1 tvg-chno="48" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV DRAMA HD" tvg-logo="http://103.176.90.118/picons/logos/USA/CTV-DRAMA-CHANNEL.png" group-title="CA| ENGLISH",CA| CTV DRAMA HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176871.ts
+#EXTINF:-1 tvg-chno="49" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV EDMONTON HD" tvg-logo="http://103.176.90.92/picons/545065.png" group-title="CA| ENGLISH",CA| CTV EDMONTON HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/545065.ts
+#EXTINF:-1 tvg-chno="50" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV HD" tvg-logo="http://103.176.90.92/picons/176812.png" group-title="CA| ENGLISH",CA| CTV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176812.ts
+#EXTINF:-1 tvg-chno="51" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV LIFE CHANNEL HD" tvg-logo="http://103.176.90.92/picons/176818.png" group-title="CA| ENGLISH",CA| CTV LIFE CHANNEL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176818.ts
+#EXTINF:-1 tvg-chno="52" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV NEWS HD" tvg-logo="http://103.176.90.92/picons/176814.png" group-title="CA| ENGLISH",CA| CTV NEWS HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176814.ts
+#EXTINF:-1 tvg-chno="53" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| CTV SCIFI HD" tvg-logo="http://103.176.90.92/picons/176819.png" group-title="CA| ENGLISH",CA| CTV SCIFI HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176819.ts
+#EXTINF:-1 tvg-chno="54" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DAYSTAR TV HD" tvg-logo="http://103.176.90.92/picons/176832.png" group-title="CA| ENGLISH",CA| DAYSTAR TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176832.ts
+#EXTINF:-1 tvg-chno="55" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DEJAVIEW" tvg-logo="http://103.176.90.92/picons/176833.png" group-title="CA| ENGLISH",CA| DEJAVIEW
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176833.ts
+#EXTINF:-1 tvg-chno="56" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DISCOVERY HD" tvg-logo="http://103.176.90.92/picons/176876.png" group-title="CA| ENGLISH",CA| DISCOVERY HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176876.ts
+#EXTINF:-1 tvg-chno="57" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DISCOVERY SCIENCE HD" tvg-logo="http://103.176.90.92/picons/176877.png" group-title="CA| ENGLISH",CA| DISCOVERY SCIENCE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176877.ts
+#EXTINF:-1 tvg-chno="58" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DISCOVERY VELOCITY HD" tvg-logo="http://103.176.90.118/picons/logos/USA/DISCOVERY-VELOCITY.png" group-title="CA| ENGLISH",CA| DISCOVERY VELOCITY HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176878.ts
+#EXTINF:-1 tvg-chno="59" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DOCUMENTARY HD" tvg-logo="http://103.176.90.92/picons/176879.png" group-title="CA| ENGLISH",CA| DOCUMENTARY HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176879.ts
+#EXTINF:-1 tvg-chno="60" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| DTOUR HD" tvg-logo="http://103.176.90.92/picons/176881.png" group-title="CA| ENGLISH",CA| DTOUR HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176881.ts
+#EXTINF:-1 tvg-chno="61" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| E! ENTERTAINMENT HD" tvg-logo="http://103.176.90.92/picons/176882.png" group-title="CA| ENGLISH",CA| E! ENTERTAINMENT HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176882.ts
+#EXTINF:-1 tvg-chno="62" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| EURONEWS" tvg-logo="http://103.176.90.92/picons/176820.png" group-title="CA| ENGLISH",CA| EURONEWS
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176820.ts
+#EXTINF:-1 tvg-chno="63" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| EWTN HD" tvg-logo="http://103.176.90.92/picons/176883.png" group-title="CA| ENGLISH",CA| EWTN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176883.ts
+#EXTINF:-1 tvg-chno="64" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FAITH TV HD" tvg-logo="http://103.176.90.92/picons/176884.png" group-title="CA| ENGLISH",CA| FAITH TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176884.ts
+#EXTINF:-1 tvg-chno="65" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FASHION TELEVISION CHANNEL" tvg-logo="http://103.176.90.92/picons/176886.png" group-title="CA| ENGLISH",CA| FASHION TELEVISION CHANNEL
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176886.ts
+#EXTINF:-1 tvg-chno="66" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FOOD NETWORK HD" tvg-logo="http://103.176.90.92/picons/176888.png" group-title="CA| ENGLISH",CA| FOOD NETWORK HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176888.ts
+#EXTINF:-1 tvg-chno="67" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FOX EAST HD" tvg-logo="http://103.176.90.92/picons/176821.png" group-title="CA| ENGLISH",CA| FOX EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176821.ts
+#EXTINF:-1 tvg-chno="68" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FOX NEWS HD" tvg-logo="http://103.176.90.92/picons/176823.png" group-title="CA| ENGLISH",CA| FOX NEWS HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176823.ts
+#EXTINF:-1 tvg-chno="69" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FOX WEST HD" tvg-logo="http://103.176.90.92/picons/176822.png" group-title="CA| ENGLISH",CA| FOX WEST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176822.ts
+#EXTINF:-1 tvg-chno="70" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FTV CANADA" tvg-logo="http://103.176.90.92/picons/176834.png" group-title="CA| ENGLISH",CA| FTV CANADA
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176834.ts
+#EXTINF:-1 tvg-chno="71" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FX HD" tvg-logo="http://103.176.90.92/picons/176911.png" group-title="CA| ENGLISH",CA| FX HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176911.ts
+#EXTINF:-1 tvg-chno="72" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FXX HD" tvg-logo="http://103.176.90.92/picons/176912.png" group-title="CA| ENGLISH",CA| FXX HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176912.ts
+#EXTINF:-1 tvg-chno="73" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| FYI HD" tvg-logo="http://103.176.90.92/picons/176890.png" group-title="CA| ENGLISH",CA| FYI HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176890.ts
+#EXTINF:-1 tvg-chno="74" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| GAME SHOW NETWORK HD" tvg-logo="http://103.176.90.118/picons/logos/gameshownetwork.png" group-title="CA| ENGLISH",CA| GAME SHOW NETWORK HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176837.ts
+#EXTINF:-1 tvg-chno="75" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| GAMETV HD" tvg-logo="http://103.176.90.118/picons/logos/USA/GAMETV.png" group-title="CA| ENGLISH",CA| GAMETV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176835.ts
+#EXTINF:-1 tvg-chno="76" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| GLOBAL EAST HD" tvg-logo="http://103.176.90.92/picons/176824.png" group-title="CA| ENGLISH",CA| GLOBAL EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176824.ts
+#EXTINF:-1 tvg-chno="77" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| GLOBAL NEWS CALGARY" tvg-logo="http://103.176.90.118/picons/logos/USA/GLOBAL-NEWS-CALGARY.png" group-title="CA| ENGLISH",CA| GLOBAL NEWS CALGARY
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/552643.ts
+#EXTINF:-1 tvg-chno="78" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| GLOBAL NEWS WINNIPEG" tvg-logo="http://103.176.90.118/picons/logos/EUROPE/GLOBAL-NEWS-WINNIPEG.png" group-title="CA| ENGLISH",CA| GLOBAL NEWS WINNIPEG
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1424779.ts
+#EXTINF:-1 tvg-chno="79" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| GLOBAL VANCOUVER/BC HD" tvg-logo="http://103.176.90.118/picons/logos/global.png" group-title="CA| ENGLISH",CA| GLOBAL VANCOUVER/BC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176825.ts
+#EXTINF:-1 tvg-chno="80" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HBO 1 HD" tvg-logo="http://103.176.90.92/picons/176913.png" group-title="CA| ENGLISH",CA| HBO 1 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176913.ts
+#EXTINF:-1 tvg-chno="81" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HBO 2 HD" tvg-logo="http://103.176.90.92/picons/176914.png" group-title="CA| ENGLISH",CA| HBO 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176914.ts
+#EXTINF:-1 tvg-chno="82" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HGTV HD" tvg-logo="http://103.176.90.92/picons/176891.png" group-title="CA| ENGLISH",CA| HGTV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176891.ts
+#EXTINF:-1 tvg-chno="83" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HISTORY 2 HD" tvg-logo="http://103.176.90.92/picons/176893.png" group-title="CA| ENGLISH",CA| HISTORY 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176893.ts
+#EXTINF:-1 tvg-chno="84" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HISTORY HD" tvg-logo="http://103.176.90.92/picons/176892.png" group-title="CA| ENGLISH",CA| HISTORY HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176892.ts
+#EXTINF:-1 tvg-chno="85" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HLN HD" tvg-logo="http://103.176.90.92/picons/176894.png" group-title="CA| ENGLISH",CA| HLN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176894.ts
+#EXTINF:-1 tvg-chno="86" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HOLLYWOOD SUITE 00' HD" tvg-logo="http://103.176.90.118/picons/logos/USA/HOLLYWOOD-SUITE.png" group-title="CA| ENGLISH",CA| HOLLYWOOD SUITE 00' HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1147062.ts
+#EXTINF:-1 tvg-chno="87" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HOLLYWOOD SUITE 70' HD" tvg-logo="http://103.176.90.118/picons/logos/USA/HOLLYWOOD-SUITE.png" group-title="CA| ENGLISH",CA| HOLLYWOOD SUITE 70' HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1147063.ts
+#EXTINF:-1 tvg-chno="88" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HOLLYWOOD SUITE 70S" tvg-logo="http://103.176.90.92/picons/176916.png" group-title="CA| ENGLISH",CA| HOLLYWOOD SUITE 70S
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176916.ts
+#EXTINF:-1 tvg-chno="89" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HOLLYWOOD SUITE 80S" tvg-logo="http://103.176.90.118/picons/logos/USA/HOLLYWOOD-SUITE.png" group-title="CA| ENGLISH",CA| HOLLYWOOD SUITE 80S
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176917.ts
+#EXTINF:-1 tvg-chno="90" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HOLLYWOOD SUITE 90' HD" tvg-logo="http://103.176.90.118/picons/logos/USA/HOLLYWOOD-SUITE.png" group-title="CA| ENGLISH",CA| HOLLYWOOD SUITE 90' HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1147065.ts
+#EXTINF:-1 tvg-chno="91" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| HOLLYWOOD SUITE 90S" tvg-logo="http://103.176.90.118/picons/logos/USA/HOLLYWOOD-SUITE.png" group-title="CA| ENGLISH",CA| HOLLYWOOD SUITE 90S
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176918.ts
+#EXTINF:-1 tvg-chno="92" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| IFC HD" tvg-logo="http://103.176.90.92/picons/176895.png" group-title="CA| ENGLISH",CA| IFC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176895.ts
+#EXTINF:-1 tvg-chno="93" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| INVESTIGATION DISCOVERY HD" tvg-logo="http://103.176.90.92/picons/176875.png" group-title="CA| ENGLISH",CA| INVESTIGATION DISCOVERY HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176875.ts
+#EXTINF:-1 tvg-chno="94" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| JEWISH LIFE TV" tvg-logo="http://103.176.90.92/picons/176838.png" group-title="CA| ENGLISH",CA| JEWISH LIFE TV
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176838.ts
+#EXTINF:-1 tvg-chno="95" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| JOYTV (BC) HD" tvg-logo="http://103.176.90.92/picons/176839.png" group-title="CA| ENGLISH",CA| JOYTV (BC) HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176839.ts
+#EXTINF:-1 tvg-chno="96" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| KTLA HD" tvg-logo="http://103.176.90.92/picons/176840.png" group-title="CA| ENGLISH",CA| KTLA HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176840.ts
+#EXTINF:-1 tvg-chno="97" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| LIFETIME HD" tvg-logo="http://103.176.90.92/picons/176919.png" group-title="CA| ENGLISH",CA| LIFETIME HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176919.ts
+#EXTINF:-1 tvg-chno="98" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| LOVE NATURE HD" tvg-logo="http://103.176.90.92/picons/176896.png" group-title="CA| ENGLISH",CA| LOVE NATURE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176896.ts
+#EXTINF:-1 tvg-chno="99" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MAKEFUL HD" tvg-logo="http://103.176.90.118/picons/logos/USA/MAKEFUL.png" group-title="CA| ENGLISH",CA| MAKEFUL HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176920.ts
+#EXTINF:-1 tvg-chno="100" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MAV TV HD" tvg-logo="http://103.176.90.92/picons/176841.png" group-title="CA| ENGLISH",CA| MAV TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176841.ts
+#EXTINF:-1 tvg-chno="101" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MIRACLE HD" tvg-logo="http://103.176.90.92/picons/176842.png" group-title="CA| ENGLISH",CA| MIRACLE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176842.ts
+#EXTINF:-1 tvg-chno="102" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MOVIETIME HD" tvg-logo="http://103.176.90.92/picons/176921.png" group-title="CA| ENGLISH",CA| MOVIETIME HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176921.ts
+#EXTINF:-1 tvg-chno="103" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MSNBC HD" tvg-logo="http://103.176.90.92/picons/176827.png" group-title="CA| ENGLISH",CA| MSNBC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176827.ts
+#EXTINF:-1 tvg-chno="104" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MTV 2 HD" tvg-logo="http://103.176.90.92/picons/176923.png" group-title="CA| ENGLISH",CA| MTV 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176923.ts
+#EXTINF:-1 tvg-chno="105" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MTV HD" tvg-logo="http://103.176.90.92/picons/176922.png" group-title="CA| ENGLISH",CA| MTV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176922.ts
+#EXTINF:-1 tvg-chno="106" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| MUCH MUSIC HD" tvg-logo="http://103.176.90.118/picons/logos/USA/MUCH-MUSIC.png" group-title="CA| ENGLISH",CA| MUCH MUSIC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176924.ts
+#EXTINF:-1 tvg-chno="107" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| NASA HD" tvg-logo="http://103.176.90.92/picons/1828550.png" group-title="CA| ENGLISH",CA| NASA HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1828550.ts
+#EXTINF:-1 tvg-chno="108" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| NAT GEO HD" tvg-logo="http://103.176.90.92/picons/176897.png" group-title="CA| ENGLISH",CA| NAT GEO HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176897.ts
+#EXTINF:-1 tvg-chno="109" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| NAT GEO WILD HD" tvg-logo="http://103.176.90.92/picons/176898.png" group-title="CA| ENGLISH",CA| NAT GEO WILD HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176898.ts
+#EXTINF:-1 tvg-chno="110" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| NBC EAST HD" tvg-logo="http://103.176.90.92/picons/176828.png" group-title="CA| ENGLISH",CA| NBC EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176828.ts
+#EXTINF:-1 tvg-chno="111" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| NBC WEST HD" tvg-logo="http://103.176.90.118/picons/logos/NBC-EAST-WEST-HD.png" group-title="CA| ENGLISH",CA| NBC WEST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176829.ts
+#EXTINF:-1 tvg-chno="112" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| NTV HD" tvg-logo="http://103.176.90.92/picons/176925.png" group-title="CA| ENGLISH",CA| NTV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176925.ts
+#EXTINF:-1 tvg-chno="113" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OLN HD" tvg-logo="http://103.176.90.92/picons/176843.png" group-title="CA| ENGLISH",CA| OLN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176843.ts
+#EXTINF:-1 tvg-chno="114" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OMNI 1 HD" tvg-logo="http://103.176.90.92/picons/176844.png" group-title="CA| ENGLISH",CA| OMNI 1 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176844.ts
+#EXTINF:-1 tvg-chno="115" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OMNI 2 HD" tvg-logo="http://103.176.90.92/picons/176845.png" group-title="CA| ENGLISH",CA| OMNI 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176845.ts
+#EXTINF:-1 tvg-chno="116" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OMNI EAST HD" tvg-logo="http://103.176.90.92/picons/176846.png" group-title="CA| ENGLISH",CA| OMNI EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176846.ts
+#EXTINF:-1 tvg-chno="117" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OMNI VANCOUVER HD" tvg-logo="http://103.176.90.118/picons/logos/USA/OMNI.png" group-title="CA| ENGLISH",CA| OMNI VANCOUVER HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176847.ts
+#EXTINF:-1 tvg-chno="118" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| ONE GET FIT HD" tvg-logo="http://103.176.90.118/picons/logos/USA/ONE-GET-FIT.png" group-title="CA| ENGLISH",CA| ONE GET FIT HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176849.ts
+#EXTINF:-1 tvg-chno="119" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OUT TV HD" tvg-logo="http://103.176.90.92/picons/176899.png" group-title="CA| ENGLISH",CA| OUT TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176899.ts
+#EXTINF:-1 tvg-chno="120" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| OWN HD" tvg-logo="http://103.176.90.92/picons/176900.png" group-title="CA| ENGLISH",CA| OWN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176900.ts
+#EXTINF:-1 tvg-chno="121" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| PARAMOUNT HD" tvg-logo="http://103.176.90.118/picons/logos/USA/PARAMOUNT.png" group-title="CA| ENGLISH",CA| PARAMOUNT HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176904.ts
+#EXTINF:-1 tvg-chno="122" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| PEACH TREE HD" tvg-logo="http://103.176.90.92/picons/176926.png" group-title="CA| ENGLISH",CA| PEACH TREE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176926.ts
+#EXTINF:-1 tvg-chno="123" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| PRESS TV HD" tvg-logo="http://103.176.90.92/picons/1161442.png" group-title="CA| ENGLISH",CA| PRESS TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1161442.ts
+#EXTINF:-1 tvg-chno="124" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| ROGERS TV (LONDON)" tvg-logo="http://103.176.90.92/picons/1650137.png" group-title="CA| ENGLISH",CA| ROGERS TV (LONDON)
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1650137.ts
+#EXTINF:-1 tvg-chno="125" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| RUSSIA TODAY HD" tvg-logo="http://103.176.90.92/picons/176830.png" group-title="CA| ENGLISH",CA| RUSSIA TODAY HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176830.ts
+#EXTINF:-1 tvg-chno="126" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SALT LIGHT HD" tvg-logo="http://103.176.90.92/picons/176885.png" group-title="CA| ENGLISH",CA| SALT LIGHT HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176885.ts
+#EXTINF:-1 tvg-chno="127" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SHOWCASE HD" tvg-logo="http://103.176.90.92/picons/176927.png" group-title="CA| ENGLISH",CA| SHOWCASE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176927.ts
+#EXTINF:-1 tvg-chno="128" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SILVER SCREEN CLASSICS HD" tvg-logo="http://103.176.90.118/picons/logos/silverscreen.png" group-title="CA| ENGLISH",CA| SILVER SCREEN CLASSICS HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176928.ts
+#EXTINF:-1 tvg-chno="129" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SLICE HD" tvg-logo="http://103.176.90.92/picons/176902.png" group-title="CA| ENGLISH",CA| SLICE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176902.ts
+#EXTINF:-1 tvg-chno="130" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SMITHSONIAN HD" tvg-logo="http://103.176.90.92/picons/176903.png" group-title="CA| ENGLISH",CA| SMITHSONIAN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176903.ts
+#EXTINF:-1 tvg-chno="131" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SPORTSMAN HD" tvg-logo="http://103.176.90.92/picons/176905.png" group-title="CA| ENGLISH",CA| SPORTSMAN HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176905.ts
+#EXTINF:-1 tvg-chno="132" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| STARZ 1 HD" tvg-logo="http://103.176.90.92/picons/176929.png" group-title="CA| ENGLISH",CA| STARZ 1 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176929.ts
+#EXTINF:-1 tvg-chno="133" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| STARZ 2 HD" tvg-logo="http://103.176.90.92/picons/176930.png" group-title="CA| ENGLISH",CA| STARZ 2 HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176930.ts
+#EXTINF:-1 tvg-chno="134" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SUPER CHANNEL FUSE HD" tvg-logo="http://103.176.90.92/picons/176931.png" group-title="CA| ENGLISH",CA| SUPER CHANNEL FUSE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176931.ts
+#EXTINF:-1 tvg-chno="135" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SUPER CHANNEL HEART & HOME HD" tvg-logo="http://103.176.90.92/picons/176932.png" group-title="CA| ENGLISH",CA| SUPER CHANNEL HEART & HOME HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176932.ts
+#EXTINF:-1 tvg-chno="136" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| SUPER CHANNEL VAULT HD" tvg-logo="http://103.176.90.118/picons/logos/superchannel.png" group-title="CA| ENGLISH",CA| SUPER CHANNEL VAULT HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176933.ts
+#EXTINF:-1 tvg-chno="137" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TCM HD" tvg-logo="http://103.176.90.92/picons/176935.png" group-title="CA| ENGLISH",CA| TCM HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176935.ts
+#EXTINF:-1 tvg-chno="138" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| THE WEATHER CHANNEL" tvg-logo="http://103.176.90.92/picons/716435.png" group-title="CA| ENGLISH",CA| THE WEATHER CHANNEL
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/716435.ts
+#EXTINF:-1 tvg-chno="139" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TLC HD" tvg-logo="http://103.176.90.92/picons/176906.png" group-title="CA| ENGLISH",CA| TLC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176906.ts
+#EXTINF:-1 tvg-chno="140" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TLN" tvg-logo="http://103.176.90.92/picons/1130198.png" group-title="CA| ENGLISH",CA| TLN
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1130198.ts
+#EXTINF:-1 tvg-chno="141" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TORONTO LIVE 1" tvg-logo="http://103.176.90.92/picons/1069362.png" group-title="CA| ENGLISH",CA| TORONTO LIVE 1
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1069362.ts
+#EXTINF:-1 tvg-chno="142" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TORONTO LIVE 2" tvg-logo="http://103.176.90.92/picons/1069361.png" group-title="CA| ENGLISH",CA| TORONTO LIVE 2
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1069361.ts
+#EXTINF:-1 tvg-chno="143" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TORONTO LIVE 3" tvg-logo="http://103.176.90.92/picons/1069360.png" group-title="CA| ENGLISH",CA| TORONTO LIVE 3
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1069360.ts
+#EXTINF:-1 tvg-chno="144" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TORONTO LIVE 4" tvg-logo="http://103.176.90.92/picons/1069359.png" group-title="CA| ENGLISH",CA| TORONTO LIVE 4
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1069359.ts
+#EXTINF:-1 tvg-chno="145" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TORONTO LIVE 5" tvg-logo="http://103.176.90.92/picons/1069358.png" group-title="CA| ENGLISH",CA| TORONTO LIVE 5
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1069358.ts
+#EXTINF:-1 tvg-chno="146" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TRAVEL AND ESCAPE HD" tvg-logo="http://103.176.90.92/picons/176907.png" group-title="CA| ENGLISH",CA| TRAVEL AND ESCAPE HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176907.ts
+#EXTINF:-1 tvg-chno="147" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TSC HD" tvg-logo="http://103.176.90.92/picons/863802.png" group-title="CA| ENGLISH",CA| TSC HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/863802.ts
+#EXTINF:-1 tvg-chno="148" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TV ASIA" tvg-logo="http://103.176.90.92/picons/176855.png" group-title="CA| ENGLISH",CA| TV ASIA
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176855.ts
+#EXTINF:-1 tvg-chno="149" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| TVO HD" tvg-logo="http://103.176.90.92/picons/176852.png" group-title="CA| ENGLISH",CA| TVO HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176852.ts
+#EXTINF:-1 tvg-chno="150" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| VISION HD" tvg-logo="http://103.176.90.92/picons/176856.png" group-title="CA| ENGLISH",CA| VISION HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176856.ts
+#EXTINF:-1 tvg-chno="151" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| W NETWORK HD" tvg-logo="http://103.176.90.92/picons/176940.png" group-title="CA| ENGLISH",CA| W NETWORK HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176940.ts
+#EXTINF:-1 tvg-chno="152" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| WGN HD CA" tvg-logo="http://103.176.90.92/picons/176857.png" group-title="CA| ENGLISH",CA| WGN HD CA
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176857.ts
+#EXTINF:-1 tvg-chno="153" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| WILD BRAIN TV" tvg-logo="http://103.176.90.92/picons/176870.png" group-title="CA| ENGLISH",CA| WILD BRAIN TV
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176870.ts
+#EXTINF:-1 tvg-chno="154" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| WILD TV HD" tvg-logo="http://103.176.90.92/picons/176908.png" group-title="CA| ENGLISH",CA| WILD TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176908.ts
+#EXTINF:-1 tvg-chno="155" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| WSBK HD" tvg-logo="http://103.176.90.92/picons/176858.png" group-title="CA| ENGLISH",CA| WSBK HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176858.ts
+#EXTINF:-1 tvg-chno="156" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| YES BURLINGTON HD" tvg-logo="http://103.176.90.118/picons/logos/USA/YES-BURLINGTON.png" group-title="CA| ENGLISH",CA| YES BURLINGTON HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176860.ts
+#EXTINF:-1 tvg-chno="157" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| YES TV HD" tvg-logo="http://103.176.90.92/picons/176859.png" group-title="CA| ENGLISH",CA| YES TV HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176859.ts
+#EXTINF:-1 tvg-chno="158" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| YTV EAST HD" tvg-logo="http://103.176.90.92/picons/176941.png" group-title="CA| ENGLISH",CA| YTV EAST HD
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/176941.ts
+#EXTINF:-1 tvg-chno="159" tvg-id="3ABN.Canada.Network.ca" tvg-name="CA| ZEE TV CANADA" tvg-logo="http://103.176.90.92/picons/1193365.png" group-title="CA| ENGLISH",CA| ZEE TV CANADA
+http://line.rs6ott.com/live/0aee6ec04e/b9efba2c5810/1193365.ts
