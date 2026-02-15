@@ -367,11 +367,16 @@ def auto_match_content():
         auto_matching_running = False
 
 def background_auto_matcher():
-    """Background thread that runs auto-matching every 15 minutes"""
-    print("[AUTO-MATCH] Background auto-matcher started - running every 15 minutes")
+    """Background thread that runs auto-matching on startup and every 30 minutes"""
+    print("[AUTO-MATCH] Background auto-matcher started")
     
+    # Run immediately on startup
+    print("[AUTO-MATCH] Running initial auto-match on startup...")
+    auto_match_content()
+    
+    # Then run every 30 minutes
     while True:
-        time.sleep(900)  # 15 minutes = 900 seconds
+        time.sleep(1800)  # 30 minutes = 1800 seconds
         
         if not auto_matching_running:
             print("[AUTO-MATCH] Running scheduled auto-match...")
@@ -2534,7 +2539,7 @@ def tmdb_matcher():
             
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <a href="/admin" class="button button-secondary">← Back to Dashboard</a>
-                <button onclick="triggerAutoMatch()" id="autoMatchBtn" class="button">🔄 Auto-Match All Now</button>
+                <button onclick="triggerAutoMatch()" id="autoMatchBtn" class="button">🔄 Auto-Match Unmatched</button>
             </div>
             
             <div id="autoMatchStatus" style="display: none; padding: 15px; background: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px; margin-bottom: 20px;">
@@ -2622,14 +2627,14 @@ def tmdb_matcher():
                     }} else {{
                         alert('Auto-match failed: ' + (data.error || 'Unknown error'));
                         btn.disabled = false;
-                        btn.textContent = '🔄 Auto-Match All Now';
+                        btn.textContent = '🔄 Auto-Match Unmatched';
                         status.style.display = 'none';
                     }}
                 }})
                 .catch(err => {{
                     alert('Error: ' + err);
                     btn.disabled = false;
-                    btn.textContent = '🔄 Auto-Match All Now';
+                    btn.textContent = '🔄 Auto-Match Unmatched';
                     status.style.display = 'none';
                 }});
         }}
@@ -4378,7 +4383,8 @@ if __name__ == '__main__':
     # Start background auto-matcher
     if TMDB_API_KEY and plex:
         print("\n🎬 Starting TMDb auto-matcher")
-        print("  • Runs every 15 minutes")
+        print("  • Running initial match on startup")
+        print("  • Then runs every 30 minutes")
         print("  • Auto-matches unmatched content")
         auto_matcher_thread = threading.Thread(target=background_auto_matcher, daemon=True)
         auto_matcher_thread.start()
