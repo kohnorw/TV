@@ -1155,6 +1155,14 @@ def format_series_for_xtream(show, category_id=2):
             "name": show.title,
             "cover": poster_url,
             "cover_big": backdrop_url,
+            "plot": show.summary if hasattr(show, 'summary') else "",
+            "cast": ", ".join([actor.tag for actor in show.roles[:10]]) if hasattr(show, 'roles') and show.roles else "",
+            "director": ", ".join([d.tag for d in show.directors]) if hasattr(show, 'directors') and show.directors else "",
+            "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
+            "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
+            "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
+            "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
+            "backdrop_path": [backdrop_url] if backdrop_url else [],
             "category_id": str(category_id)
         }
         
