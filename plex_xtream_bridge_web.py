@@ -317,6 +317,16 @@ def load_cache_from_disk():
         try:
             with open(CACHE_FILE, 'r') as f:
                 loaded_cache = json.load(f)
+                
+                # MIGRATION: Fix old 'seriess' bug
+                if 'seriess' in loaded_cache and 'series' not in loaded_cache:
+                    print("[CACHE] Migrating 'seriess' -> 'series'")
+                    loaded_cache['series'] = loaded_cache.pop('seriess')
+                elif 'seriess' in loaded_cache and 'series' in loaded_cache:
+                    # Merge them
+                    print("[CACHE] Merging 'seriess' into 'series'")
+                    loaded_cache['series'].update(loaded_cache.pop('seriess'))
+                
                 metadata_cache.update(loaded_cache)
             
             movies_count = len(metadata_cache.get('movies', {}))
@@ -324,6 +334,8 @@ def load_cache_from_disk():
             print(f"[CACHE] Loaded from disk: {movies_count} movies, {series_count} shows")
         except Exception as e:
             print(f"[CACHE] Error loading cache from disk: {e}")
+            import traceback
+            traceback.print_exc()
 
 def save_cache_to_disk():
     """Save cached metadata to disk"""
@@ -333,14 +345,26 @@ def save_cache_to_disk():
         if cache_dir and not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
         
+        # DEBUG: Show what's actually in the cache
+        print(f"[CACHE-DEBUG] Cache keys: {list(metadata_cache.keys())}")
+        
         with open(CACHE_FILE, 'w') as f:
             json.dump(metadata_cache, f)
         
         movies_count = len(metadata_cache.get('movies', {}))
         series_count = len(metadata_cache.get('series', {}))
+        seriess_count = len(metadata_cache.get('seriess', {}))  # Check for bug
+        
+        if seriess_count > 0:
+            print(f"[CACHE-BUG] Found 'seriess' key with {seriess_count} items! Migrating...")
+            metadata_cache['series'] = metadata_cache.pop('seriess')
+            series_count = len(metadata_cache.get('series', {}))
+        
         print(f"[CACHE] Saved to disk: {movies_count} movies, {series_count} shows")
     except Exception as e:
         print(f"[CACHE] Error saving cache to disk: {e}")
+        import traceback
+        traceback.print_exc()
 
 def get_cached_or_fetch(cache_key, fetch_function, *args):
     """Get data from cache or fetch if expired"""
