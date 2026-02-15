@@ -1133,18 +1133,28 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
             except:
                 backdrop_url = ""
         
-        # Format with TMDb posters
+        # Format with TMDb posters - multiple field names for compatibility
         formatted = {
             "stream_id": movie.ratingKey,
             "num": movie.ratingKey,
             "name": movie.title,
+            # Multiple poster field names for different apps
             "stream_icon": poster_url,
+            "icon": poster_url,
             "cover": poster_url,
+            "poster": poster_url,
+            "image": poster_url,
+            # Backdrop fields
             "cover_big": backdrop_url,
+            "backdrop": backdrop_url,
+            "fanart": backdrop_url,
             "added": str(int(movie.addedAt.timestamp())) if hasattr(movie, 'addedAt') and movie.addedAt else "",
             "category_id": str(category_id),
             "container_extension": "mkv",
-            "direct_source": stream_url
+            "direct_source": stream_url,
+            # Year for better matching
+            "year": str(movie.year) if hasattr(movie, 'year') and movie.year else "",
+            "releaseDate": str(movie.year) if hasattr(movie, 'year') and movie.year else ""
         }
         
         return formatted
@@ -1190,18 +1200,26 @@ def format_series_for_xtream(show, category_id=2):
             except:
                 backdrop_url = ""
         
-        # Full metadata with TMDb posters
+        # Full metadata with TMDb posters - multiple field names for compatibility
         formatted = {
             "series_id": show.ratingKey,
             "num": show.ratingKey,
             "name": show.title,
+            # Multiple poster field names for different apps
             "cover": poster_url,
+            "poster": poster_url,
+            "image": poster_url,
+            "icon": poster_url,
+            # Backdrop fields
             "cover_big": backdrop_url,
+            "backdrop": backdrop_url,
+            "fanart": backdrop_url,
             "plot": show.summary if hasattr(show, 'summary') else "",
             "cast": ", ".join([actor.tag for actor in show.roles[:10]]) if hasattr(show, 'roles') and show.roles else "",
             "director": ", ".join([d.tag for d in show.directors]) if hasattr(show, 'directors') and show.directors else "",
             "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
             "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
+            "year": str(show.year) if hasattr(show, 'year') and show.year else "",
             "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
             "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
             "backdrop_path": [backdrop_url] if backdrop_url else [],
@@ -2718,19 +2736,27 @@ def player_api():
                         print(f"[ERROR] Error getting series: {e}")
         else:
             # No category specified - return all series (with optional limit)
-            print(f"[DEBUG] Returning all series from all sections")
+            # Default to 300 max to prevent timeout
+            max_limit = limit if limit > 0 else 300
+            print(f"[DEBUG] Returning all series from all sections (max {max_limit})")
             count = 0
-            for section in plex.library.sections():
+            
+            sections = get_cached_sections()
+            for section in sections:
                 if section.type == 'show':
                     print(f"[DEBUG] Processing TV section: {section.title}")
-                    for show in section.all():
-                        if limit > 0 and count >= limit:
-                            break
-                        formatted = format_series_for_xtream(show, section.key)
-                        if formatted:
-                            series_list.append(formatted)
-                            count += 1
-                if limit > 0 and count >= limit:
+                    try:
+                        for show in section.search():
+                            if count >= max_limit:
+                                break
+                            formatted = format_series_for_xtream(show, section.key)
+                            if formatted:
+                                series_list.append(formatted)
+                                count += 1
+                    except Exception as e:
+                        print(f"[ERROR] Error iterating shows: {e}")
+                
+                if count >= max_limit:
                     break
         
         elapsed = time.time() - start_time
