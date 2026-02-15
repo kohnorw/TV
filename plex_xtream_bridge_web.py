@@ -179,7 +179,13 @@ def cache_worker():
                     
                     metadata_cache[cache_category][cache_key] = tmdb_data
                     items_processed += 1
-                    print(f"[CACHE] ✓ Cached {item_type}: {plex_item.title if hasattr(plex_item, 'title') else cache_key}")
+                    
+                    # Debug: Show what we just saved
+                    if item_type == 'series':
+                        current_series_count = len(metadata_cache.get('series', {}))
+                        print(f"[CACHE] ✓ Cached {item_type}: {plex_item.title if hasattr(plex_item, 'title') else cache_key} (Total series now: {current_series_count})")
+                    else:
+                        print(f"[CACHE] ✓ Cached {item_type}: {plex_item.title if hasattr(plex_item, 'title') else cache_key}")
                     
                     # Progress update every 10 items
                     if items_processed % 10 == 0:
@@ -2371,24 +2377,20 @@ def clear_cache():
 @app.route('/admin/warm-cache', methods=['POST'])
 @require_admin_login
 def trigger_cache_warming():
-    """Manually trigger cache warming"""
+    """Manually trigger cache warming for both movies and series"""
     if not TMDB_API_KEY:
         return jsonify({"success": False, "message": "TMDb API key not configured"})
-    
-    item_type = request.form.get('type', 'movie')  # 'movie' or 'show'
-    limit = int(request.form.get('limit', 0))  # 0 = all
     
     # Start worker if not running
     start_cache_warming()
     
-    # Queue items
-    threading.Thread(
-        target=lambda: warm_cache_for_library(item_type, limit),
-        daemon=True
-    ).start()
+    # Queue both series and movies
+    print("[ADMIN] Manual cache warming triggered for series and movies")
+    threading.Thread(target=lambda: warm_cache_for_library('series', limit=None), daemon=True).start()
+    time.sleep(1)  # Give series a head start
+    threading.Thread(target=lambda: warm_cache_for_library('movie', limit=None), daemon=True).start()
     
-    message = f"Started caching {limit if limit > 0 else 'all'} {item_type}s in background"
-    return jsonify({"success": True, "message": message})
+    return jsonify({"success": True, "message": "Caching all series and movies in background (series first)"})
 
 @app.route('/admin/scan-new-content', methods=['POST'])
 @require_admin_login
