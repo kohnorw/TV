@@ -16,7 +16,7 @@ import secrets
 import base64
 from cryptography.fernet import Fernet
 import threading
-from queue import Queue
+from queue import Queue, Empty
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
@@ -112,19 +112,40 @@ def cache_worker():
     items_processed = 0
     items_failed = 0
     last_save = time.time()
+    consecutive_timeouts = 0
     
     while cache_warming_active:
         try:
-            item = cache_queue.get(timeout=1)
+            # Get item from queue with timeout
+            try:
+                item = cache_queue.get(timeout=5)  # Increased timeout to 5 seconds
+                consecutive_timeouts = 0  # Reset on successful get
+            except Empty:
+                # Queue is empty, this is normal
+                consecutive_timeouts += 1
+                if consecutive_timeouts > 12:  # 1 minute of empty queue (12 * 5 seconds)
+                    print(f"[CACHE] Queue empty for 1 minute, worker pausing...")
+                    time.sleep(30)  # Sleep for 30 seconds
+                    consecutive_timeouts = 0
+                continue
+            
             if item is None:  # Poison pill to stop worker
+                print("[CACHE] Received stop signal")
                 break
             
             item_type, plex_item = item
+            
+            # Validate item
+            if not plex_item or not hasattr(plex_item, 'ratingKey'):
+                print(f"[CACHE] Invalid item in queue: {item}")
+                cache_queue.task_done()
+                continue
+            
             cache_key = f"{item_type}_{plex_item.ratingKey}"
             
             # Skip if already cached
             if cache_key in metadata_cache.get(item_type + 's', {}):
-                print(f"[CACHE] Skipping (already cached): {plex_item.title}")
+                print(f"[CACHE] Skipping (already cached): {plex_item.title if hasattr(plex_item, 'title') else cache_key}")
                 cache_queue.task_done()
                 continue
             
@@ -148,7 +169,7 @@ def cache_worker():
                     
                     metadata_cache[cache_category][cache_key] = tmdb_data
                     items_processed += 1
-                    print(f"[CACHE] ✓ Cached {item_type}: {plex_item.title}")
+                    print(f"[CACHE] ✓ Cached {item_type}: {plex_item.title if hasattr(plex_item, 'title') else cache_key}")
                     
                     # Progress update every 10 items
                     if items_processed % 10 == 0:
@@ -158,10 +179,12 @@ def cache_worker():
                         print(f"[CACHE] Progress: {items_processed} cached, {items_failed} failed, {remaining} in queue (Movies: {movies}, Shows: {series})")
                 else:
                     items_failed += 1
-                    print(f"[CACHE] ✗ No TMDb data for {item_type}: {plex_item.title}")
+                    print(f"[CACHE] ✗ No TMDb data for {item_type}: {plex_item.title if hasattr(plex_item, 'title') else cache_key}")
             except Exception as e:
                 items_failed += 1
-                print(f"[CACHE] ✗ Error caching {plex_item.title}: {e}")
+                print(f"[CACHE] ✗ Error caching {plex_item.title if hasattr(plex_item, 'title') else 'item'}: {e}")
+                import traceback
+                traceback.print_exc()
             
             cache_queue.task_done()
             
@@ -181,6 +204,7 @@ def cache_worker():
                 cache_queue.task_done()
             except:
                 pass
+            time.sleep(1)  # Wait a bit before continuing
             continue
     
     # Final save when worker stops
