@@ -2485,39 +2485,9 @@ def player_api():
         })
     
     # Get VOD categories
+    # Get VOD categories - DISABLED, return empty
     elif action == 'get_vod_categories':
-        categories = []
-        
-        # Use cached sections for better multi-user performance
-        sections = get_cached_sections()
-        
-        # Add original Plex library categories
-        for section in sections:
-            if section.type == 'movie':
-                categories.append({
-                    "category_id": section.key,
-                    "category_name": f"📁 {section.title}",
-                    "parent_id": 0
-                })
-        
-        # Add smart/auto-generated categories
-        smart_cats = get_smart_categories_for_movies()
-        for cat in smart_cats:
-            categories.append({
-                "category_id": cat['id'],
-                "category_name": cat['name'],
-                "parent_id": 0
-            })
-        
-        # Add custom user-created categories
-        for cat in custom_categories.get('movies', []):
-            categories.append({
-                "category_id": cat['id'],
-                "category_name": cat['name'],
-                "parent_id": 0
-            })
-        
-        return jsonify(categories)
+        return jsonify([])
     
     # Get VOD streams (movies)
     elif action == 'get_vod_streams':
@@ -2529,7 +2499,31 @@ def player_api():
         
         movies = []
         
-        if category_id:
+        # Handle "All Movies" category (category_id = "0")
+        if category_id == "0" or not category_id:
+            # No category specified or "All" - return all movies (with limit)
+            max_limit = limit if limit > 0 else 500
+            count = 0
+            
+            sections = get_cached_sections()
+            for section in sections:
+                if section.type == 'movie':
+                    # Use search() instead of all() for better performance
+                    try:
+                        for movie in section.search():
+                            if count >= max_limit:
+                                break
+                            # Fetch TMDb for high-quality posters (cached)
+                            formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
+                            if formatted:
+                                movies.append(formatted)
+                                count += 1
+                    except Exception as e:
+                        print(f"[ERROR] Error iterating movies: {e}")
+                
+                if count >= max_limit:
+                    break
+        elif category_id:
             cat_id_str = str(category_id)
             
             # Check if it's a smart category
@@ -2565,30 +2559,6 @@ def player_api():
                                 movies.append(formatted)
                     except Exception as e:
                         print(f"[ERROR] Error getting movies: {e}")
-        else:
-            # No category specified - return all movies (with optional limit)
-            # Default to 500 max to prevent timeout
-            max_limit = limit if limit > 0 else 500
-            count = 0
-            
-            sections = get_cached_sections()
-            for section in sections:
-                if section.type == 'movie':
-                    # Use search() instead of all() for better performance
-                    try:
-                        for movie in section.search():
-                            if count >= max_limit:
-                                break
-                            # Fetch TMDb for high-quality posters (cached)
-                            formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
-                            if formatted:
-                                movies.append(formatted)
-                                count += 1
-                    except Exception as e:
-                        print(f"[ERROR] Error iterating movies: {e}")
-                
-                if count >= max_limit:
-                    break
         
         elapsed = time.time() - start_time
         print(f"[PERF] Returned {len(movies)} movies in {elapsed:.2f}s")
@@ -2652,39 +2622,9 @@ def player_api():
             return jsonify({"error": str(e)}), 404
     
     # Get series categories
+    # Get series categories - DISABLED, return empty
     elif action == 'get_series_categories':
-        categories = []
-        
-        # Use cached sections for better multi-user performance
-        sections = get_cached_sections()
-        
-        # Add original Plex library categories
-        for section in sections:
-            if section.type == 'show':
-                categories.append({
-                    "category_id": section.key,
-                    "category_name": f"📁 {section.title}",
-                    "parent_id": 0
-                })
-        
-        # Add smart/auto-generated categories
-        smart_cats = get_smart_categories_for_series()
-        for cat in smart_cats:
-            categories.append({
-                "category_id": cat['id'],
-                "category_name": cat['name'],
-                "parent_id": 0
-            })
-        
-        # Add custom user-created categories
-        for cat in custom_categories.get('series', []):
-            categories.append({
-                "category_id": cat['id'],
-                "category_name": cat['name'],
-                "parent_id": 0
-            })
-        
-        return jsonify(categories)
+        return jsonify([])
     
     # Get series
     elif action == 'get_series':
@@ -2696,7 +2636,31 @@ def player_api():
         
         series_list = []
         
-        if category_id:
+        # Handle "All Series" category (category_id = "0")
+        if category_id == "0" or not category_id:
+            # No category specified or "All" - return all series (with limit)
+            max_limit = limit if limit > 0 else 300
+            print(f"[DEBUG] Returning all series from all sections (max {max_limit})")
+            count = 0
+            
+            sections = get_cached_sections()
+            for section in sections:
+                if section.type == 'show':
+                    print(f"[DEBUG] Processing TV section: {section.title}")
+                    try:
+                        for show in section.search():
+                            if count >= max_limit:
+                                break
+                            formatted = format_series_for_xtream(show, section.key)
+                            if formatted:
+                                series_list.append(formatted)
+                                count += 1
+                    except Exception as e:
+                        print(f"[ERROR] Error iterating shows: {e}")
+                
+                if count >= max_limit:
+                    break
+        elif category_id:
             cat_id_str = str(category_id)
             
             # Check if it's a smart category
