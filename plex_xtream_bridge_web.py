@@ -1097,9 +1097,20 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
         if not stream_url:
             return None
         
-        # Generate poster URLs
-        poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'thumb') and movie.thumb else ""
-        backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'art') and movie.art else ""
+        # Use Plex's built-in URL methods for proper poster/backdrop URLs
+        try:
+            poster_url = movie.thumbUrl if hasattr(movie, 'thumbUrl') else ""
+            if not poster_url and hasattr(movie, 'thumb'):
+                poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}"
+        except:
+            poster_url = ""
+        
+        try:
+            backdrop_url = movie.artUrl if hasattr(movie, 'artUrl') else ""
+            if not backdrop_url and hasattr(movie, 'art'):
+                backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}"
+        except:
+            backdrop_url = ""
         
         # Lightweight format for fast listing - only basic fields
         formatted = {
@@ -1122,9 +1133,20 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
 def format_series_for_xtream(show, category_id=2):
     """Format Plex TV show to Xtream Codes format - with Plex metadata"""
     try:
-        # Generate poster URLs
-        poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'thumb') and show.thumb else ""
-        backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'art') and show.art else ""
+        # Use Plex's built-in URL methods for proper poster/backdrop URLs
+        try:
+            poster_url = show.thumbUrl if hasattr(show, 'thumbUrl') else ""
+            if not poster_url and hasattr(show, 'thumb'):
+                poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}"
+        except:
+            poster_url = ""
+        
+        try:
+            backdrop_url = show.artUrl if hasattr(show, 'artUrl') else ""
+            if not backdrop_url and hasattr(show, 'art'):
+                backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}"
+        except:
+            backdrop_url = ""
         
         # Full Plex metadata
         formatted = {
@@ -1133,14 +1155,6 @@ def format_series_for_xtream(show, category_id=2):
             "name": show.title,
             "cover": poster_url,
             "cover_big": backdrop_url,
-            "plot": show.summary if hasattr(show, 'summary') else "",
-            "cast": ", ".join([actor.tag for actor in show.roles[:10]]) if hasattr(show, 'roles') and show.roles else "",
-            "director": ", ".join([d.tag for d in show.directors]) if hasattr(show, 'directors') and show.directors else "",
-            "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
-            "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
-            "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
-            "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
-            "backdrop_path": [backdrop_url] if backdrop_url else [],
             "category_id": str(category_id)
         }
         
