@@ -309,8 +309,26 @@ custom_categories = {
 # Simple in-memory cache (per-session, not saved to disk)
 session_cache = {
     'movies': {},
-    'series': {}
+    'series': {},
+    'categories': {},
+    'sections': None,
+    'sections_time': 0
 }
+
+# Cache library sections (updated every 5 minutes)
+def get_cached_sections():
+    """Get library sections with caching to reduce Plex API calls"""
+    current_time = time.time()
+    
+    if session_cache['sections'] and (current_time - session_cache['sections_time']) < 300:
+        return session_cache['sections']
+    
+    # Refresh sections
+    if plex:
+        session_cache['sections'] = list(plex.library.sections())
+        session_cache['sections_time'] = current_time
+    
+    return session_cache['sections']
 
 # Track known items to detect new content
 known_item_ids = set()
@@ -1073,21 +1091,30 @@ def get_stream_url(item, session_info=""):
     return stream_url
 
 def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
-    """Format Plex movie to Xtream Codes format - optimized for fast player loading"""
+    """Format Plex movie to Xtream Codes format - with Plex metadata"""
     try:
         stream_url = get_stream_url(movie)
         if not stream_url:
             return None
         
-        # Minimal format - only essential fields for fast loading
+        # Full Plex metadata
         formatted = {
             "stream_id": movie.ratingKey,
             "name": movie.title,
             "stream_icon": f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'thumb') and movie.thumb else "",
+            "rating": str(movie.rating or 0) if hasattr(movie, 'rating') else "0",
+            "rating_5based": round(float(movie.rating or 0) / 2, 1) if hasattr(movie, 'rating') else 0,
             "added": str(int(movie.addedAt.timestamp())) if hasattr(movie, 'addedAt') and movie.addedAt else "",
             "category_id": str(category_id),
             "container_extension": "mkv",
-            "direct_source": stream_url
+            "direct_source": stream_url,
+            "plot": movie.summary if hasattr(movie, 'summary') else "",
+            "cast": ", ".join([actor.tag for actor in movie.roles[:10]]) if hasattr(movie, 'roles') and movie.roles else "",
+            "director": ", ".join([d.tag for d in movie.directors]) if hasattr(movie, 'directors') and movie.directors else "",
+            "genre": ", ".join([g.tag for g in movie.genres]) if hasattr(movie, 'genres') and movie.genres else "",
+            "releaseDate": str(movie.year) if hasattr(movie, 'year') and movie.year else "",
+            "duration": str(movie.duration // 60000) if hasattr(movie, 'duration') and movie.duration else "",
+            "backdrop_path": [f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}"] if hasattr(movie, 'art') and movie.art else []
         }
         
         return formatted
@@ -1095,13 +1122,21 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
         return None
 
 def format_series_for_xtream(show, category_id=2):
-    """Format Plex TV show to Xtream Codes format - optimized for fast player loading"""
+    """Format Plex TV show to Xtream Codes format - with Plex metadata"""
     try:
-        # Minimal format - only essential fields
+        # Full Plex metadata
         formatted = {
             "series_id": show.ratingKey,
             "name": show.title,
             "cover": f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'thumb') and show.thumb else "",
+            "plot": show.summary if hasattr(show, 'summary') else "",
+            "cast": ", ".join([actor.tag for actor in show.roles[:10]]) if hasattr(show, 'roles') and show.roles else "",
+            "director": ", ".join([d.tag for d in show.directors]) if hasattr(show, 'directors') and show.directors else "",
+            "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
+            "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
+            "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
+            "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
+            "backdrop_path": [f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}"] if hasattr(show, 'art') and show.art else [],
             "category_id": str(category_id)
         }
         
@@ -2367,8 +2402,11 @@ def player_api():
     elif action == 'get_vod_categories':
         categories = []
         
+        # Use cached sections for better multi-user performance
+        sections = get_cached_sections()
+        
         # Add original Plex library categories
-        for section in plex.library.sections():
+        for section in sections:
             if section.type == 'movie':
                 categories.append({
                     "category_id": section.key,
@@ -2523,8 +2561,11 @@ def player_api():
     elif action == 'get_series_categories':
         categories = []
         
+        # Use cached sections for better multi-user performance
+        sections = get_cached_sections()
+        
         # Add original Plex library categories
-        for section in plex.library.sections():
+        for section in sections:
             if section.type == 'show':
                 categories.append({
                     "category_id": section.key,
@@ -3642,4 +3683,13 @@ if __name__ == '__main__':
     
     print("=" * 60)
     
-    app.run(host=BRIDGE_HOST, port=BRIDGE_PORT, debug=False, threaded=True)
+    # Run with optimized settings for multiple concurrent users
+    print("\n⚡ Optimized for multi-user performance")
+    print("  • Cached library sections (5-minute refresh)")
+    print("  • Minimal response size for fast loading")
+    print("  • Threaded request handling")
+    
+    print("=" * 60)
+    
+    # Run with threaded=True for better concurrent user handling
+    app.run(host=BRIDGE_HOST, port=BRIDGE_PORT, debug=False, threaded=True, processes=1)
