@@ -1091,28 +1091,49 @@ def get_stream_url(item, session_info=""):
     return stream_url
 
 def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
-    """Format Plex movie to Xtream Codes format - with Plex posters"""
+    """Format Plex movie to Xtream Codes format - with TMDb posters"""
     try:
         stream_url = get_stream_url(movie)
         if not stream_url:
             return None
         
-        # Use Plex posters only
-        try:
-            poster_url = movie.thumbUrl if hasattr(movie, 'thumbUrl') else ""
-            if not poster_url and hasattr(movie, 'thumb'):
-                poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            poster_url = ""
+        # Get TMDb data for high-quality posters (with caching)
+        tmdb_data = None
+        if TMDB_API_KEY and not skip_tmdb:
+            cache_key = f"movie_{movie.ratingKey}"
+            
+            # Check cache first
+            if cache_key in session_cache['movies']:
+                tmdb_data = session_cache['movies'][cache_key]
+            else:
+                # Fetch and cache
+                tmdb_data = enhance_movie_with_tmdb(movie)
+                if tmdb_data:
+                    session_cache['movies'][cache_key] = tmdb_data
         
-        try:
-            backdrop_url = movie.artUrl if hasattr(movie, 'artUrl') else ""
-            if not backdrop_url and hasattr(movie, 'art'):
-                backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            backdrop_url = ""
+        # Use TMDb posters if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('poster_path'):
+            poster_url = tmdb_data['poster_path']
+        else:
+            try:
+                poster_url = movie.thumbUrl if hasattr(movie, 'thumbUrl') else ""
+                if not poster_url and hasattr(movie, 'thumb'):
+                    poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                poster_url = ""
         
-        # Format with Plex posters - multiple field names for compatibility
+        # Use TMDb backdrop if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('backdrop_path'):
+            backdrop_url = tmdb_data['backdrop_path']
+        else:
+            try:
+                backdrop_url = movie.artUrl if hasattr(movie, 'artUrl') else ""
+                if not backdrop_url and hasattr(movie, 'art'):
+                    backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                backdrop_url = ""
+        
+        # Format with TMDb posters - multiple field names for compatibility
         formatted = {
             "stream_id": movie.ratingKey,
             "num": movie.ratingKey,
@@ -1133,7 +1154,9 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
             "direct_source": stream_url,
             # Year for better matching
             "year": str(movie.year) if hasattr(movie, 'year') and movie.year else "",
-            "releaseDate": str(movie.year) if hasattr(movie, 'year') and movie.year else ""
+            "releaseDate": str(movie.year) if hasattr(movie, 'year') and movie.year else "",
+            # TMDb match status
+            "tmdb_matched": bool(tmdb_data)
         }
         
         return formatted
@@ -1141,24 +1164,45 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
         return None
 
 def format_series_for_xtream(show, category_id=2):
-    """Format Plex TV show to Xtream Codes format - with Plex posters"""
+    """Format Plex TV show to Xtream Codes format - with TMDb posters"""
     try:
-        # Use Plex posters only
-        try:
-            poster_url = show.thumbUrl if hasattr(show, 'thumbUrl') else ""
-            if not poster_url and hasattr(show, 'thumb'):
-                poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            poster_url = ""
+        # Get TMDb data for high-quality posters (with caching)
+        tmdb_data = None
+        if TMDB_API_KEY:
+            cache_key = f"series_{show.ratingKey}"
+            
+            # Check cache first
+            if cache_key in session_cache['series']:
+                tmdb_data = session_cache['series'][cache_key]
+            else:
+                # Fetch and cache
+                tmdb_data = enhance_series_with_tmdb(show)
+                if tmdb_data:
+                    session_cache['series'][cache_key] = tmdb_data
         
-        try:
-            backdrop_url = show.artUrl if hasattr(show, 'artUrl') else ""
-            if not backdrop_url and hasattr(show, 'art'):
-                backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            backdrop_url = ""
+        # Use TMDb posters if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('poster_path'):
+            poster_url = tmdb_data['poster_path']
+        else:
+            try:
+                poster_url = show.thumbUrl if hasattr(show, 'thumbUrl') else ""
+                if not poster_url and hasattr(show, 'thumb'):
+                    poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                poster_url = ""
         
-        # Full metadata with Plex posters - multiple field names for compatibility
+        # Use TMDb backdrop if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('backdrop_path'):
+            backdrop_url = tmdb_data['backdrop_path']
+        else:
+            try:
+                backdrop_url = show.artUrl if hasattr(show, 'artUrl') else ""
+                if not backdrop_url and hasattr(show, 'art'):
+                    backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                backdrop_url = ""
+        
+        # Full metadata with TMDb posters - multiple field names for compatibility
         formatted = {
             "series_id": show.ratingKey,
             "num": show.ratingKey,
@@ -1181,7 +1225,9 @@ def format_series_for_xtream(show, category_id=2):
             "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
             "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
             "backdrop_path": [backdrop_url] if backdrop_url else [],
-            "category_id": str(category_id)
+            "category_id": str(category_id),
+            # TMDb match status
+            "tmdb_matched": bool(tmdb_data)
         }
         
         return formatted
@@ -1506,7 +1552,7 @@ DASHBOARD_HTML = """
             
             <div class="action-buttons">
                 <a href="/admin/settings" class="button">⚙️ Settings</a>
-                <a href="/admin/categories" class="button">📚 Categories</a>
+                <a href="/admin/match-tmdb" class="button">🎬 Match Unmatched</a>
                 <a href="/admin/test" class="button button-secondary">🧪 Test Connection</a>
                 <a href="/admin/logout" class="button button-danger">🚪 Logout</a>
             </div>
@@ -2278,6 +2324,98 @@ def create_custom_category():
 def admin_logout():
     """Logout"""
     session.pop('admin_logged_in', None)
+    return redirect('/admin/login')
+
+@app.route('/admin/match-tmdb')
+@require_admin_login
+def tmdb_matcher():
+    """TMDb manual matching page"""
+    if not TMDB_API_KEY:
+        return redirect('/admin/settings')
+    
+    # Get unmatched content
+    unmatched_movies = []
+    unmatched_shows = []
+    
+    if plex:
+        # Check movies
+        for section in plex.library.sections():
+            if section.type == 'movie':
+                for movie in section.all()[:100]:  # Limit to first 100
+                    cache_key = f"movie_{movie.ratingKey}"
+                    if cache_key not in session_cache['movies']:
+                        unmatched_movies.append({
+                            'id': movie.ratingKey,
+                            'title': movie.title,
+                            'year': movie.year if hasattr(movie, 'year') else ''
+                        })
+            elif section.type == 'show':
+                for show in section.all()[:50]:  # Limit to first 50
+                    cache_key = f"series_{show.ratingKey}"
+                    if cache_key not in session_cache['series']:
+                        unmatched_shows.append({
+                            'id': show.ratingKey,
+                            'title': show.title,
+                            'year': show.year if hasattr(show, 'year') else ''
+                        })
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Match Unmatched Content - Plex Xtream Bridge</title>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }}
+            .container {{ max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }}
+            h1 {{ color: #333; margin-bottom: 10px; }}
+            .subtitle {{ color: #666; margin-bottom: 30px; }}
+            .button {{ display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; transition: all 0.3s; border: none; cursor: pointer; }}
+            .button:hover {{ background: #5568d3; transform: translateY(-2px); }}
+            .button-secondary {{ background: #6c757d; }}
+            .button-secondary:hover {{ background: #5a6268; }}
+            .unmatched-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }}
+            .unmatched-item {{ background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; }}
+            .unmatched-item h3 {{ color: #333; margin-bottom: 5px; font-size: 16px; }}
+            .unmatched-item .year {{ color: #666; font-size: 14px; }}
+            .section-header {{ margin-top: 30px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }}
+            .info-box {{ background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🎬 Match Unmatched Content</h1>
+            <p class="subtitle">Content without TMDb posters</p>
+            
+            <div class="info-box">
+                <strong>ℹ️ Note:</strong> This shows content that hasn't been matched with TMDb yet. The first time you load content in your player, it will automatically fetch TMDb data and cache it. Matched content will disappear from this list.
+            </div>
+            
+            <a href="/admin" class="button button-secondary">← Back to Dashboard</a>
+            
+            <h2 class="section-header">📽️ Unmatched Movies ({len(unmatched_movies)})</h2>
+            <div class="unmatched-grid">
+                {''.join([f'<div class="unmatched-item"><h3>{m["title"]}</h3><p class="year">{m["year"]}</p></div>' for m in unmatched_movies[:20]])}
+            </div>
+            
+            {f'<p style="margin-top: 10px; color: #666;">Showing 20 of {len(unmatched_movies)} unmatched movies...</p>' if len(unmatched_movies) > 20 else ''}
+            
+            <h2 class="section-header">📺 Unmatched TV Shows ({len(unmatched_shows)})</h2>
+            <div class="unmatched-grid">
+                {''.join([f'<div class="unmatched-item"><h3>{s["title"]}</h3><p class="year">{s["year"]}</p></div>' for s in unmatched_shows[:20]])}
+            </div>
+            
+            {f'<p style="margin-top: 10px; color: #666;">Showing 20 of {len(unmatched_shows)} unmatched TV shows...</p>' if len(unmatched_shows) > 20 else ''}
+        </div>
+    </body>
+    </html>
+    """
+    return html
+
+@app.route('/admin/logout_old')
+def admin_logout_old():
+    """Logout"""
+    session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
 
 @app.route('/admin')
@@ -2471,8 +2609,8 @@ def player_api():
                         for movie in section.search():
                             if count >= max_limit:
                                 break
-                            # Use Plex posters only (fast)
-                            formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=True)
+                            # Fetch TMDb for high-quality posters (cached)
+                            formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
                             if formatted:
                                 movies.append(formatted)
                                 count += 1
@@ -2511,8 +2649,8 @@ def player_api():
                         movies_to_process = all_movies[:limit] if limit > 0 else all_movies
                         
                         for movie in movies_to_process:
-                            # Use Plex posters only (fast, no TMDb calls)
-                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=True)
+                            # Fetch TMDb for high-quality posters (cached)
+                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=False)
                             if formatted:
                                 movies.append(formatted)
                     except Exception as e:
@@ -3153,6 +3291,8 @@ def category_editor():
 @app.route('/admin/category/<category_type>/<category_id>')
 @require_admin_login
 def view_category_contents(category_type, category_id):
+    """Category viewer disabled - redirect to dashboard"""
+    return redirect('/admin')
     """View all content in a specific category"""
     
     # Get the category details
@@ -3417,6 +3557,29 @@ def view_category_contents(category_type, category_id):
 @app.route('/admin/categories')
 @require_admin_login
 def admin_categories():
+    """Categories disabled - redirect to dashboard"""
+    return redirect('/admin')
+
+@app.route('/admin/categories/create', methods=['GET', 'POST'])
+@require_admin_login
+def create_category():
+    """Categories disabled - redirect to dashboard"""
+    return redirect('/admin')
+
+@app.route('/admin/categories/<cat_id>/view')
+@require_admin_login
+def view_category(cat_id):
+    """Categories disabled - redirect to dashboard"""
+    return redirect('/admin')
+
+@app.route('/admin/categories/<cat_id>/delete', methods=['POST'])
+@require_admin_login
+def delete_category(cat_id):
+    """Categories disabled - redirect to dashboard"""
+    return redirect('/admin')
+
+# Original categories page function (disabled)
+def admin_categories_old():
     """Categories management page"""
     # Get smart categories
     movie_smart = get_smart_categories_for_movies()
