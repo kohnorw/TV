@@ -6,6 +6,7 @@ Allows Xtream UI players to access Plex library content with easy configuration
 
 from flask import Flask, jsonify, request, Response, render_template_string, redirect, url_for, session
 from plexapi.server import PlexServer
+import requests
 import hashlib
 import time
 import json
