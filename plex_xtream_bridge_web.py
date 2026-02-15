@@ -1657,7 +1657,7 @@ DASHBOARD_HTML = """
             
             <div class="action-buttons">
                 <a href="/admin/settings" class="button">⚙️ Settings</a>
-                <a href="/admin/match-tmdb" class="button">🎬 Match Unmatched</a>
+                <a href="/admin/match-tmdb" class="button">🎬 Match Unmatched Movies/Series</a>
                 <a href="/admin/test" class="button button-secondary">🧪 Test Connection</a>
                 <a href="/admin/logout" class="button button-danger">🚪 Logout</a>
             </div>
