@@ -1079,26 +1079,11 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
         if not stream_url:
             return None
         
-        # Get TMDb enhanced metadata with session cache
-        # Set skip_tmdb=True for much faster loading (uses only Plex data)
-        tmdb_data = None
-        if not skip_tmdb and TMDB_API_KEY:
-            cache_key = f"movie_{movie.ratingKey}"
-            
-            # Check cache first
-            if cache_key in session_cache['movies']:
-                tmdb_data = session_cache['movies'][cache_key]
-            else:
-                # Fetch and cache (this is slow on first load)
-                tmdb_data = enhance_movie_with_tmdb(movie)
-                if tmdb_data:
-                    session_cache['movies'][cache_key] = tmdb_data
+        # Use only Plex metadata - no TMDb for maximum speed
+        poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'thumb') and movie.thumb else ""
+        backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'art') and movie.art else ""
         
-        # Get best poster and backdrop URLs
-        poster_url = get_poster_url(movie, tmdb_data)
-        backdrop_url = get_backdrop_url(movie, tmdb_data)
-        
-        # Use TMDb data if available, otherwise fall back to Plex
+        # Simple, fast format with just Plex data
         formatted = {
             "num": movie.ratingKey,
             "name": movie.title,
@@ -1106,31 +1091,16 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
             "stream_id": movie.ratingKey,
             "stream_icon": poster_url,
             "cover_big": backdrop_url,
-            "rating": str(tmdb_data.get('vote_average', movie.rating or 0)) if tmdb_data else str(movie.rating or 0),
-            "rating_5based": tmdb_data.get('vote_average', round(float(movie.rating or 0) / 2, 1)) if tmdb_data else round(float(movie.rating or 0) / 2, 1),
-            "added": str(int(movie.addedAt.timestamp())) if movie.addedAt else "",
+            "rating": str(movie.rating or 0) if hasattr(movie, 'rating') else "0",
+            "rating_5based": round(float(movie.rating or 0) / 2, 1) if hasattr(movie, 'rating') else 0,
+            "added": str(int(movie.addedAt.timestamp())) if hasattr(movie, 'addedAt') and movie.addedAt else "",
             "category_id": str(category_id),
-            "category_ids": str(category_id),  # For tracking which category this belongs to
+            "category_ids": str(category_id),
             "container_extension": "mkv",
             "custom_sid": "",
             "direct_source": stream_url,
-            "plex_direct": stream_url  # Direct file stream URL
+            "plex_direct": stream_url
         }
-        
-        # Add extended metadata if available
-        if tmdb_data:
-            formatted.update({
-                "tmdb_id": str(tmdb_data.get('tmdb_id', '')),
-                "imdb_id": tmdb_data.get('imdb_id', ''),
-                "plot": tmdb_data.get('overview', movie.summary or ''),
-                "backdrop_path": [backdrop_url] if backdrop_url else [],
-                "youtube_trailer": tmdb_data.get('trailer', ''),
-                "director": tmdb_data.get('director', ''),
-                "cast": ', '.join([c['name'] for c in tmdb_data.get('cast', [])]),
-                "genre": ', '.join(tmdb_data.get('genres', [])),
-                "keywords": ', '.join(tmdb_data.get('keywords', [])),
-                "popularity": tmdb_data.get('popularity', 0)
-            })
         
         return formatted
     except Exception as e:
@@ -1140,68 +1110,9 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
 def format_series_for_xtream(show, category_id=2):
     """Format Plex TV show to Xtream Codes format"""
     try:
-        # Get TMDb enhanced metadata with session cache
-        tmdb_data = None
-        if TMDB_API_KEY:
-            cache_key = f"series_{show.ratingKey}"
-            
-            # Check cache first
-            if cache_key in session_cache['series']:
-                tmdb_data = session_cache['series'][cache_key]
-            else:
-                # Fetch and cache
-                tmdb_data = enhance_series_with_tmdb(show)
-                if tmdb_data:
-                    session_cache['series'][cache_key] = tmdb_data
-        
-        # Get best poster and backdrop URLs
-        poster_url = get_poster_url(show, tmdb_data)
-        backdrop_url = get_backdrop_url(show, tmdb_data)
-        
-        # Safely get cast
-        cast = ""
-        if tmdb_data and tmdb_data.get('cast'):
-            cast = ', '.join([c['name'] for c in tmdb_data.get('cast', [])])
-        elif hasattr(show, 'roles') and show.roles:
-            cast = ", ".join([actor.tag for actor in show.roles[:5]])
-        
-        # Safely get director/creator
-        director = ""
-        if tmdb_data and tmdb_data.get('created_by'):
-            director = ', '.join(tmdb_data.get('created_by', []))
-        elif hasattr(show, 'directors') and show.directors:
-            director = show.directors[0].tag
-        
-        # Safely get genre
-        genre = ""
-        if tmdb_data and tmdb_data.get('genres'):
-            genre = ', '.join(tmdb_data.get('genres', []))
-        elif hasattr(show, 'genres') and show.genres:
-            genre = ", ".join([g.tag for g in show.genres])
-        
-        # Safely get summary
-        plot = ""
-        if tmdb_data and tmdb_data.get('overview'):
-            plot = tmdb_data.get('overview')
-        elif hasattr(show, 'summary'):
-            plot = show.summary or ''
-        
-        # Safely get year
-        release_date = ""
-        if hasattr(show, 'year') and show.year:
-            release_date = str(show.year)
-        
-        # Safely get rating
-        rating = 0
-        if tmdb_data and tmdb_data.get('vote_average'):
-            rating = tmdb_data.get('vote_average')
-        elif hasattr(show, 'rating') and show.rating:
-            rating = show.rating
-        
-        # Safely get updated time
-        last_modified = ""
-        if hasattr(show, 'updatedAt') and show.updatedAt:
-            last_modified = str(int(show.updatedAt.timestamp()))
+        # Use only Plex metadata - no TMDb for maximum speed
+        poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'thumb') and show.thumb else ""
+        backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'art') and show.art else ""
         
         formatted = {
             "num": show.ratingKey,
@@ -1209,30 +1120,17 @@ def format_series_for_xtream(show, category_id=2):
             "series_id": show.ratingKey,
             "cover": poster_url,
             "cover_big": backdrop_url,
-            "plot": plot,
-            "cast": cast,
-            "director": director,
-            "genre": genre,
-            "releaseDate": release_date,
-            "rating": str(rating),
-            "rating_5based": round(float(rating) / 2, 1) if rating else 0,
+            "plot": show.summary if hasattr(show, 'summary') else "",
+            "cast": ", ".join([actor.tag for actor in show.roles[:5]]) if hasattr(show, 'roles') and show.roles else "",
+            "director": show.directors[0].tag if hasattr(show, 'directors') and show.directors else "",
+            "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
+            "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
+            "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
+            "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
             "category_id": str(category_id),
             "category_ids": str(category_id),
-            "last_modified": last_modified
+            "last_modified": str(int(show.updatedAt.timestamp())) if hasattr(show, 'updatedAt') and show.updatedAt else ""
         }
-        
-        # Add extended metadata if available
-        if tmdb_data:
-            formatted.update({
-                "tmdb_id": str(tmdb_data.get('tmdb_id', '')),
-                "backdrop_path": [backdrop_url] if backdrop_url else [],
-                "youtube_trailer": tmdb_data.get('trailer', ''),
-                "keywords": ', '.join(tmdb_data.get('keywords', [])),
-                "networks": ', '.join(tmdb_data.get('networks', [])),
-                "status": tmdb_data.get('status', ''),
-                "episode_run_time": str(tmdb_data.get('number_of_episodes', 0)),
-                "popularity": tmdb_data.get('popularity', 0)
-            })
         
         return formatted
     except Exception as e:
@@ -3767,14 +3665,6 @@ if __name__ == '__main__':
     
     if ADMIN_PASSWORD == 'admin123':
         print("\n⚠️  IMPORTANT: You'll be asked to change the default password on first login!")
-    
-    print("=" * 60)
-    
-    # Start background scanner for new Plex content
-    if TMDB_API_KEY and plex:
-        print("\n🔍 Starting background scanner (checks every 15 minutes)")
-        scanner_thread = threading.Thread(target=background_scanner, daemon=True)
-        scanner_thread.start()
     
     print("=" * 60)
     
