@@ -312,6 +312,81 @@ session_cache = {
     'series': {}
 }
 
+# Track known items to detect new content
+known_item_ids = set()
+last_scan_time = 0
+
+def scan_for_new_plex_content():
+    """Scan Plex for new content and pre-cache TMDb data"""
+    global known_item_ids, last_scan_time
+    
+    if not plex or not TMDB_API_KEY:
+        return
+    
+    try:
+        new_items = 0
+        
+        # Scan all sections
+        for section in plex.library.sections():
+            if section.type == 'movie':
+                for movie in section.all():
+                    item_id = f"movie_{movie.ratingKey}"
+                    
+                    # New movie detected
+                    if item_id not in known_item_ids:
+                        known_item_ids.add(item_id)
+                        
+                        # Pre-cache TMDb data
+                        cache_key = f"movie_{movie.ratingKey}"
+                        if cache_key not in session_cache['movies']:
+                            tmdb_data = enhance_movie_with_tmdb(movie)
+                            if tmdb_data:
+                                session_cache['movies'][cache_key] = tmdb_data
+                                new_items += 1
+                                print(f"[NEW] Cached new movie: {movie.title}")
+            
+            elif section.type == 'show':
+                for show in section.all():
+                    item_id = f"show_{show.ratingKey}"
+                    
+                    # New show detected
+                    if item_id not in known_item_ids:
+                        known_item_ids.add(item_id)
+                        
+                        # Pre-cache TMDb data
+                        cache_key = f"series_{show.ratingKey}"
+                        if cache_key not in session_cache['series']:
+                            tmdb_data = enhance_series_with_tmdb(show)
+                            if tmdb_data:
+                                session_cache['series'][cache_key] = tmdb_data
+                                new_items += 1
+                                print(f"[NEW] Cached new show: {show.title}")
+        
+        if new_items > 0:
+            print(f"[SCAN] Found and cached {new_items} new items")
+        
+        last_scan_time = time.time()
+    
+    except Exception as e:
+        print(f"[SCAN] Error scanning for new content: {e}")
+
+def background_scanner():
+    """Background thread that scans every 15 minutes"""
+    global last_scan_time
+    
+    print("[SCAN] Background scanner started - checking every 15 minutes")
+    
+    # Initial scan
+    scan_for_new_plex_content()
+    
+    while True:
+        time.sleep(900)  # 15 minutes = 900 seconds
+        
+        current_time = time.time()
+        if current_time - last_scan_time >= 900:
+            print("[SCAN] Running 15-minute scan for new content...")
+            scan_for_new_plex_content()
+
 def get_poster_url(item, tmdb_data=None):
     """Get best available poster URL"""
     # Priority: TMDb high-res > Plex
@@ -3692,6 +3767,14 @@ if __name__ == '__main__':
     
     if ADMIN_PASSWORD == 'admin123':
         print("\n⚠️  IMPORTANT: You'll be asked to change the default password on first login!")
+    
+    print("=" * 60)
+    
+    # Start background scanner for new Plex content
+    if TMDB_API_KEY and plex:
+        print("\n🔍 Starting background scanner (checks every 15 minutes)")
+        scanner_thread = threading.Thread(target=background_scanner, daemon=True)
+        scanner_thread.start()
     
     print("=" * 60)
     
