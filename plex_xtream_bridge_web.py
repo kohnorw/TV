@@ -1741,7 +1741,6 @@ SETTINGS_HTML = """
             
             <div class="action-buttons" style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <a href="/admin" class="button button-secondary">← Back to Dashboard</a>
-                <a href="/admin/category-editor" class="button">🎯 Create Custom Category</a>
                 <button onclick="clearCache()" class="button button-secondary">🔄 Clear Cache</button>
             </div>
         </div>
@@ -2367,50 +2366,204 @@ def tmdb_matcher():
         <style>
             * {{ margin: 0; padding: 0; box-sizing: border-box; }}
             body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }}
-            .container {{ max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }}
+            .container {{ max-width: 1400px; margin: 0 auto; background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }}
             h1 {{ color: #333; margin-bottom: 10px; }}
             .subtitle {{ color: #666; margin-bottom: 30px; }}
-            .button {{ display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; transition: all 0.3s; border: none; cursor: pointer; }}
+            .button {{ display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; transition: all 0.3s; border: none; cursor: pointer; font-size: 14px; }}
             .button:hover {{ background: #5568d3; transform: translateY(-2px); }}
             .button-secondary {{ background: #6c757d; }}
             .button-secondary:hover {{ background: #5a6268; }}
-            .unmatched-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }}
-            .unmatched-item {{ background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; }}
+            .button-small {{ padding: 8px 16px; font-size: 12px; }}
+            .button-success {{ background: #28a745; }}
+            .button-success:hover {{ background: #218838; }}
+            .unmatched-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; margin-top: 20px; }}
+            .unmatched-item {{ background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }}
             .unmatched-item h3 {{ color: #333; margin-bottom: 5px; font-size: 16px; }}
-            .unmatched-item .year {{ color: #666; font-size: 14px; }}
+            .unmatched-item .year {{ color: #666; font-size: 14px; margin-bottom: 15px; }}
+            .search-box {{ width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; }}
+            .search-results {{ max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px; display: none; }}
+            .search-result {{ padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }}
+            .search-result:hover {{ background: #f0f0f0; }}
+            .search-result-title {{ font-weight: bold; color: #333; }}
+            .search-result-year {{ color: #666; font-size: 12px; }}
+            .search-result-overview {{ color: #999; font-size: 11px; margin-top: 5px; }}
             .section-header {{ margin-top: 30px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }}
             .info-box {{ background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px; }}
+            .matched {{ opacity: 0.5; pointer-events: none; }}
+            .matched-badge {{ background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block; margin-top: 10px; }}
         </style>
     </head>
     <body>
         <div class="container">
             <h1>🎬 Match Unmatched Content</h1>
-            <p class="subtitle">Content without TMDb posters</p>
+            <p class="subtitle">Manually match content with TMDb</p>
             
             <div class="info-box">
-                <strong>ℹ️ Note:</strong> This shows content that hasn't been matched with TMDb yet. The first time you load content in your player, it will automatically fetch TMDb data and cache it. Matched content will disappear from this list.
+                <strong>ℹ️ How to use:</strong> Type in the search box to find the correct TMDb match for each item. Click on a result to match it.
             </div>
             
             <a href="/admin" class="button button-secondary">← Back to Dashboard</a>
             
             <h2 class="section-header">📽️ Unmatched Movies ({len(unmatched_movies)})</h2>
             <div class="unmatched-grid">
-                {''.join([f'<div class="unmatched-item"><h3>{m["title"]}</h3><p class="year">{m["year"]}</p></div>' for m in unmatched_movies[:20]])}
+                {''.join([f'''
+                <div class="unmatched-item" id="movie-{m["id"]}">
+                    <h3>{m["title"]}</h3>
+                    <p class="year">{m["year"]}</p>
+                    <input type="text" class="search-box" placeholder="Search TMDb for '{m["title"]}'..." 
+                           onkeyup="searchTMDb('{m["id"]}', 'movie', this.value)">
+                    <div class="search-results" id="results-movie-{m["id"]}"></div>
+                </div>
+                ''' for m in unmatched_movies[:20]])}
             </div>
             
             {f'<p style="margin-top: 10px; color: #666;">Showing 20 of {len(unmatched_movies)} unmatched movies...</p>' if len(unmatched_movies) > 20 else ''}
             
             <h2 class="section-header">📺 Unmatched TV Shows ({len(unmatched_shows)})</h2>
             <div class="unmatched-grid">
-                {''.join([f'<div class="unmatched-item"><h3>{s["title"]}</h3><p class="year">{s["year"]}</p></div>' for s in unmatched_shows[:20]])}
+                {''.join([f'''
+                <div class="unmatched-item" id="show-{s["id"]}">
+                    <h3>{s["title"]}</h3>
+                    <p class="year">{s["year"]}</p>
+                    <input type="text" class="search-box" placeholder="Search TMDb for '{s["title"]}'..." 
+                           onkeyup="searchTMDb('{s["id"]}', 'show', this.value)">
+                    <div class="search-results" id="results-show-{s["id"]}"></div>
+                </div>
+                ''' for s in unmatched_shows[:20]])}
             </div>
             
             {f'<p style="margin-top: 10px; color: #666;">Showing 20 of {len(unmatched_shows)} unmatched TV shows...</p>' if len(unmatched_shows) > 20 else ''}
         </div>
+        
+        <script>
+        let searchTimeout = null;
+        
+        function searchTMDb(plexId, type, query) {{
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {{
+                document.getElementById('results-' + type + '-' + plexId).style.display = 'none';
+                return;
+            }}
+            
+            searchTimeout = setTimeout(() => {{
+                fetch('/admin/search-tmdb?query=' + encodeURIComponent(query) + '&type=' + type)
+                    .then(r => r.json())
+                    .then(data => {{
+                        const resultsDiv = document.getElementById('results-' + type + '-' + plexId);
+                        if (data.results && data.results.length > 0) {{
+                            resultsDiv.innerHTML = data.results.map(r => `
+                                <div class="search-result" onclick="matchContent('${{plexId}}', '${{type}}', ${{r.id}}, '${{r.title || r.name}}')">
+                                    <div class="search-result-title">${{r.title || r.name}}</div>
+                                    <div class="search-result-year">${{r.release_date || r.first_air_date || 'N/A'}}</div>
+                                    <div class="search-result-overview">${{(r.overview || '').substring(0, 100)}}...</div>
+                                </div>
+                            `).join('');
+                            resultsDiv.style.display = 'block';
+                        }} else {{
+                            resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">No results found</div>';
+                            resultsDiv.style.display = 'block';
+                        }}
+                    }});
+            }}, 500);
+        }}
+        
+        function matchContent(plexId, type, tmdbId, title) {{
+            fetch('/admin/match-content', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ plex_id: plexId, type: type, tmdb_id: tmdbId }})
+            }})
+            .then(r => r.json())
+            .then(data => {{
+                if (data.success) {{
+                    const item = document.getElementById(type + '-' + plexId);
+                    item.classList.add('matched');
+                    item.innerHTML += '<div class="matched-badge">✓ Matched to: ' + title + '</div>';
+                    setTimeout(() => {{ item.style.display = 'none'; }}, 2000);
+                }} else {{
+                    alert('Failed to match: ' + (data.error || 'Unknown error'));
+                }}
+            }});
+        }}
+        </script>
     </body>
     </html>
     """
     return html
+
+@app.route('/admin/search-tmdb')
+@require_admin_login
+def search_tmdb_api():
+    """Search TMDb API"""
+    query = request.args.get('query', '')
+    content_type = request.args.get('type', 'movie')
+    
+    if not TMDB_API_KEY or not query:
+        return jsonify({"results": []})
+    
+    try:
+        tmdb_type = 'tv' if content_type == 'show' else 'movie'
+        url = f"https://api.themoviedb.org/3/search/{tmdb_type}"
+        params = {
+            'api_key': TMDB_API_KEY,
+            'query': query,
+            'include_adult': 'false'
+        }
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({"results": []})
+    except Exception as e:
+        print(f"[ERROR] TMDb search error: {e}")
+        return jsonify({"results": []})
+
+@app.route('/admin/match-content', methods=['POST'])
+@require_admin_login
+def match_content_manual():
+    """Manually match content to TMDb"""
+    data = request.json
+    plex_id = data.get('plex_id')
+    content_type = data.get('type')
+    tmdb_id = data.get('tmdb_id')
+    
+    if not plex_id or not content_type or not tmdb_id:
+        return jsonify({"success": False, "error": "Missing parameters"})
+    
+    try:
+        # Fetch TMDb data by ID
+        tmdb_type = 'tv' if content_type == 'show' else 'movie'
+        url = f"https://api.themoviedb.org/3/{tmdb_type}/{tmdb_id}"
+        params = {
+            'api_key': TMDB_API_KEY,
+            'append_to_response': 'credits,keywords,videos'
+        }
+        response = requests.get(url, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            tmdb_data = response.json()
+            
+            # Format TMDb data
+            formatted_data = {
+                'tmdb_id': tmdb_data.get('id'),
+                'poster_path': f"https://image.tmdb.org/t/p/original{tmdb_data.get('poster_path')}" if tmdb_data.get('poster_path') else '',
+                'backdrop_path': f"https://image.tmdb.org/t/p/original{tmdb_data.get('backdrop_path')}" if tmdb_data.get('backdrop_path') else '',
+                'overview': tmdb_data.get('overview', ''),
+                'vote_average': tmdb_data.get('vote_average', 0)
+            }
+            
+            # Save to cache
+            cache_key = f"{content_type}_{plex_id}" if content_type == 'movie' else f"series_{plex_id}"
+            cache_category = 'movies' if content_type == 'movie' else 'series'
+            session_cache[cache_category][cache_key] = formatted_data
+            
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "TMDb API error"})
+    except Exception as e:
+        print(f"[ERROR] Manual match error: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/admin/logout_old')
 def admin_logout_old():
