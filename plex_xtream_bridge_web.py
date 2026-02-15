@@ -316,6 +316,67 @@ session_cache = {
     'sections_time': 0
 }
 
+# Auto-matching state
+auto_matching_running = False
+last_auto_match_time = 0
+
+def auto_match_content():
+    """Background task to auto-match unmatched content with TMDb"""
+    global auto_matching_running, last_auto_match_time
+    
+    if not TMDB_API_KEY or not plex:
+        return
+    
+    auto_matching_running = True
+    matched_count = 0
+    
+    try:
+        print("[AUTO-MATCH] Starting auto-match scan...")
+        
+        # Match movies
+        for section in plex.library.sections():
+            if section.type == 'movie':
+                for movie in section.all():
+                    cache_key = f"movie_{movie.ratingKey}"
+                    if cache_key not in session_cache['movies']:
+                        # Try to match with TMDb
+                        tmdb_data = enhance_movie_with_tmdb(movie)
+                        if tmdb_data:
+                            session_cache['movies'][cache_key] = tmdb_data
+                            matched_count += 1
+                            print(f"[AUTO-MATCH] Matched movie: {movie.title}")
+            
+            elif section.type == 'show':
+                for show in section.all():
+                    cache_key = f"series_{show.ratingKey}"
+                    if cache_key not in session_cache['series']:
+                        # Try to match with TMDb
+                        tmdb_data = enhance_series_with_tmdb(show)
+                        if tmdb_data:
+                            session_cache['series'][cache_key] = tmdb_data
+                            matched_count += 1
+                            print(f"[AUTO-MATCH] Matched show: {show.title}")
+        
+        print(f"[AUTO-MATCH] Completed! Matched {matched_count} items")
+        last_auto_match_time = time.time()
+    
+    except Exception as e:
+        print(f"[AUTO-MATCH] Error: {e}")
+    
+    finally:
+        auto_matching_running = False
+
+def background_auto_matcher():
+    """Background thread that runs auto-matching every 15 minutes"""
+    print("[AUTO-MATCH] Background auto-matcher started - running every 15 minutes")
+    
+    while True:
+        time.sleep(900)  # 15 minutes = 900 seconds
+        
+        if not auto_matching_running:
+            print("[AUTO-MATCH] Running scheduled auto-match...")
+            auto_match_content()
+
 # Cache library sections (updated every 5 minutes)
 def get_cached_sections():
     """Get library sections with caching to reduce Plex API calls"""
@@ -2333,6 +2394,11 @@ def tmdb_matcher():
     if not TMDB_API_KEY:
         return redirect('/admin/settings')
     
+    # Get page numbers from query params
+    movie_page = int(request.args.get('movie_page', 1))
+    show_page = int(request.args.get('show_page', 1))
+    per_page = 20
+    
     # Get unmatched content
     unmatched_movies = []
     unmatched_shows = []
@@ -2341,7 +2407,7 @@ def tmdb_matcher():
         # Check movies
         for section in plex.library.sections():
             if section.type == 'movie':
-                for movie in section.all()[:100]:  # Limit to first 100
+                for movie in section.all():
                     cache_key = f"movie_{movie.ratingKey}"
                     if cache_key not in session_cache['movies']:
                         unmatched_movies.append({
@@ -2350,7 +2416,7 @@ def tmdb_matcher():
                             'year': movie.year if hasattr(movie, 'year') else ''
                         })
             elif section.type == 'show':
-                for show in section.all()[:50]:  # Limit to first 50
+                for show in section.all():
                     cache_key = f"series_{show.ratingKey}"
                     if cache_key not in session_cache['series']:
                         unmatched_shows.append({
@@ -2358,6 +2424,63 @@ def tmdb_matcher():
                             'title': show.title,
                             'year': show.year if hasattr(show, 'year') else ''
                         })
+    
+    # Pagination calculations
+    total_movies = len(unmatched_movies)
+    total_shows = len(unmatched_shows)
+    
+    movie_total_pages = (total_movies + per_page - 1) // per_page if total_movies > 0 else 1
+    show_total_pages = (total_shows + per_page - 1) // per_page if total_shows > 0 else 1
+    
+    movie_start = (movie_page - 1) * per_page
+    movie_end = movie_start + per_page
+    
+    show_start = (show_page - 1) * per_page
+    show_end = show_start + per_page
+    
+    movies_paginated = unmatched_movies[movie_start:movie_end]
+    shows_paginated = unmatched_shows[show_start:show_end]
+    
+    # Generate pagination HTML
+    def generate_pagination(current_page, total_pages, content_type):
+        if total_pages <= 1:
+            return ""
+        
+        parts = []
+        parts.append('<div class="pagination">')
+        
+        # Previous button
+        if current_page > 1:
+            prev_movie_page = movie_page if content_type == "show" else current_page - 1
+            prev_show_page = show_page if content_type == "movie" else current_page - 1
+            parts.append(f'<a href="?movie_page={prev_movie_page}&show_page={prev_show_page}" class="page-btn">← Previous</a>')
+        else:
+            parts.append('<span class="page-btn disabled">← Previous</span>')
+        
+        # Page numbers
+        for page in range(1, total_pages + 1):
+            if page == current_page:
+                parts.append(f'<span class="page-btn active">{page}</span>')
+            elif abs(page - current_page) <= 2 or page == 1 or page == total_pages:
+                page_movie_page = movie_page if content_type == "show" else page
+                page_show_page = show_page if content_type == "movie" else page
+                parts.append(f'<a href="?movie_page={page_movie_page}&show_page={page_show_page}" class="page-btn">{page}</a>')
+            elif abs(page - current_page) == 3:
+                parts.append('<span class="page-btn disabled">...</span>')
+        
+        # Next button
+        if current_page < total_pages:
+            next_movie_page = movie_page if content_type == "show" else current_page + 1
+            next_show_page = show_page if content_type == "movie" else current_page + 1
+            parts.append(f'<a href="?movie_page={next_movie_page}&show_page={next_show_page}" class="page-btn">Next →</a>')
+        else:
+            parts.append('<span class="page-btn disabled">Next →</span>')
+        
+        parts.append('</div>')
+        return ''.join(parts)
+    
+    movie_pagination = generate_pagination(movie_page, movie_total_pages, 'movie')
+    show_pagination = generate_pagination(show_page, show_total_pages, 'show')
     
     html = f"""
     <!DOCTYPE html>
@@ -2388,10 +2511,16 @@ def tmdb_matcher():
             .search-result-title {{ font-weight: bold; color: #333; }}
             .search-result-year {{ color: #666; font-size: 12px; }}
             .search-result-overview {{ color: #999; font-size: 11px; margin-top: 5px; }}
-            .section-header {{ margin-top: 30px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }}
+            .section-header {{ margin-top: 30px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }}
             .info-box {{ background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px; }}
             .matched {{ opacity: 0.5; pointer-events: none; }}
             .matched-badge {{ background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block; margin-top: 10px; }}
+            .pagination {{ display: flex; gap: 5px; justify-content: center; align-items: center; margin: 20px 0; flex-wrap: wrap; }}
+            .page-btn {{ padding: 8px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 4px; transition: all 0.2s; font-size: 14px; }}
+            .page-btn:hover {{ background: #5568d3; }}
+            .page-btn.active {{ background: #764ba2; font-weight: bold; }}
+            .page-btn.disabled {{ background: #ccc; cursor: not-allowed; pointer-events: none; }}
+            .count-badge {{ background: #667eea; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px; }}
         </style>
     </head>
     <body>
@@ -2403,9 +2532,38 @@ def tmdb_matcher():
                 <strong>ℹ️ How to use:</strong> Type in the search box to find the correct TMDb match for each item. Click on a result to match it.
             </div>
             
-            <a href="/admin" class="button button-secondary">← Back to Dashboard</a>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <a href="/admin" class="button button-secondary">← Back to Dashboard</a>
+                <button onclick="triggerAutoMatch()" id="autoMatchBtn" class="button">🔄 Auto-Match All Now</button>
+            </div>
             
-            <h2 class="section-header">📽️ Unmatched Movies ({len(unmatched_movies)})</h2>
+            <div id="autoMatchStatus" style="display: none; padding: 15px; background: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px; margin-bottom: 20px;">
+                <strong>⏳ Auto-matching in progress...</strong>
+                <p style="margin: 5px 0 0 0;">This may take a few minutes. The page will refresh when complete.</p>
+            </div>
+            
+            <div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="margin-bottom: 15px; color: #333;">🔍 Search & Fix Any Content</h3>
+                <input type="text" id="globalSearch" class="search-box" placeholder="Search for any movie or TV show to fix its TMDb match..." 
+                       onkeyup="globalSearch(this.value)" style="margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="radio" name="searchType" value="movie" checked onchange="clearGlobalResults()"> Movies
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="radio" name="searchType" value="show" onchange="clearGlobalResults()"> TV Shows
+                    </label>
+                </div>
+                <div id="globalSearchResults" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+            
+            <h2 class="section-header">
+                <span>📽️ Unmatched Movies</span>
+                <span class="count-badge">{total_movies} total • Page {movie_page} of {movie_total_pages}</span>
+            </h2>
+            
+            {movie_pagination}
+            
             <div class="unmatched-grid">
                 {''.join([f'''
                 <div class="unmatched-item" id="movie-{m["id"]}">
@@ -2415,12 +2573,18 @@ def tmdb_matcher():
                            onkeyup="searchTMDb('{m["id"]}', 'movie', this.value)">
                     <div class="search-results" id="results-movie-{m["id"]}"></div>
                 </div>
-                ''' for m in unmatched_movies[:20]])}
+                ''' for m in movies_paginated])}
             </div>
             
-            {f'<p style="margin-top: 10px; color: #666;">Showing 20 of {len(unmatched_movies)} unmatched movies...</p>' if len(unmatched_movies) > 20 else ''}
+            {movie_pagination}
             
-            <h2 class="section-header">📺 Unmatched TV Shows ({len(unmatched_shows)})</h2>
+            <h2 class="section-header">
+                <span>📺 Unmatched TV Shows</span>
+                <span class="count-badge">{total_shows} total • Page {show_page} of {show_total_pages}</span>
+            </h2>
+            
+            {show_pagination}
+            
             <div class="unmatched-grid">
                 {''.join([f'''
                 <div class="unmatched-item" id="show-{s["id"]}">
@@ -2430,14 +2594,129 @@ def tmdb_matcher():
                            onkeyup="searchTMDb('{s["id"]}', 'show', this.value)">
                     <div class="search-results" id="results-show-{s["id"]}"></div>
                 </div>
-                ''' for s in unmatched_shows[:20]])}
+                ''' for s in shows_paginated])}
             </div>
             
-            {f'<p style="margin-top: 10px; color: #666;">Showing 20 of {len(unmatched_shows)} unmatched TV shows...</p>' if len(unmatched_shows) > 20 else ''}
+            {show_pagination}
         </div>
         
         <script>
         let searchTimeout = null;
+        let globalSearchTimeout = null;
+        
+        function triggerAutoMatch() {{
+            const btn = document.getElementById('autoMatchBtn');
+            const status = document.getElementById('autoMatchStatus');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Auto-matching...';
+            status.style.display = 'block';
+            
+            fetch('/admin/trigger-auto-match', {{ method: 'POST' }})
+                .then(r => r.json())
+                .then(data => {{
+                    if (data.success) {{
+                        setTimeout(() => {{
+                            location.reload();
+                        }}, 2000);
+                    }} else {{
+                        alert('Auto-match failed: ' + (data.error || 'Unknown error'));
+                        btn.disabled = false;
+                        btn.textContent = '🔄 Auto-Match All Now';
+                        status.style.display = 'none';
+                    }}
+                }})
+                .catch(err => {{
+                    alert('Error: ' + err);
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Auto-Match All Now';
+                    status.style.display = 'none';
+                }});
+        }}
+        
+        function clearGlobalResults() {{
+            document.getElementById('globalSearchResults').innerHTML = '';
+        }}
+        
+        function globalSearch(query) {{
+            clearTimeout(globalSearchTimeout);
+            
+            if (query.length < 2) {{
+                document.getElementById('globalSearchResults').innerHTML = '';
+                return;
+            }}
+            
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            
+            globalSearchTimeout = setTimeout(() => {{
+                fetch('/admin/search-plex?query=' + encodeURIComponent(query) + '&type=' + searchType)
+                    .then(r => r.json())
+                    .then(data => {{
+                        const resultsDiv = document.getElementById('globalSearchResults');
+                        if (data.results && data.results.length > 0) {{
+                            resultsDiv.innerHTML = data.results.map(item => `
+                                <div style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #667eea;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                                        <div>
+                                            <h4 style="margin: 0 0 5px 0; color: #333;">${{item.title}}</h4>
+                                            <p style="margin: 0; color: #666; font-size: 14px;">${{item.year || 'N/A'}}</p>
+                                            <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">
+                                                ${{item.matched ? '✓ Already matched to TMDb' : '⚠️ Not matched'}}
+                                            </p>
+                                        </div>
+                                        <button onclick="showFixDialog('${{item.id}}', '${{searchType}}', '${{item.title.replace(/'/g, "\\\\'")}}')" 
+                                                class="button button-small" style="margin-left: 10px;">
+                                            ${{item.matched ? 'Re-match' : 'Match'}}
+                                        </button>
+                                    </div>
+                                    <div id="fix-dialog-${{item.id}}" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                                        <input type="text" class="search-box" placeholder="Search TMDb for '${{item.title}}'..." 
+                                               onkeyup="searchTMDbForFix('${{item.id}}', '${{searchType}}', this.value)">
+                                        <div id="fix-results-${{item.id}}" class="search-results"></div>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }} else {{
+                            resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">No results found in your Plex library</div>';
+                        }}
+                    }});
+            }}, 500);
+        }}
+        
+        function showFixDialog(plexId, type, title) {{
+            const dialog = document.getElementById('fix-dialog-' + plexId);
+            dialog.style.display = dialog.style.display === 'none' ? 'block' : 'none';
+        }}
+        
+        function searchTMDbForFix(plexId, type, query) {{
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {{
+                document.getElementById('fix-results-' + plexId).style.display = 'none';
+                return;
+            }}
+            
+            searchTimeout = setTimeout(() => {{
+                fetch('/admin/search-tmdb?query=' + encodeURIComponent(query) + '&type=' + type)
+                    .then(r => r.json())
+                    .then(data => {{
+                        const resultsDiv = document.getElementById('fix-results-' + plexId);
+                        if (data.results && data.results.length > 0) {{
+                            resultsDiv.innerHTML = data.results.map(r => `
+                                <div class="search-result" onclick="matchContent('${{plexId}}', '${{type}}', ${{r.id}}, '${{r.title || r.name}}', true)">
+                                    <div class="search-result-title">${{r.title || r.name}}</div>
+                                    <div class="search-result-year">${{r.release_date || r.first_air_date || 'N/A'}}</div>
+                                    <div class="search-result-overview">${{(r.overview || '').substring(0, 100)}}...</div>
+                                </div>
+                            `).join('');
+                            resultsDiv.style.display = 'block';
+                        }} else {{
+                            resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">No results found</div>';
+                            resultsDiv.style.display = 'block';
+                        }}
+                    }});
+            }}, 500);
+        }}
         
         function searchTMDb(plexId, type, query) {{
             clearTimeout(searchTimeout);
@@ -2454,7 +2733,7 @@ def tmdb_matcher():
                         const resultsDiv = document.getElementById('results-' + type + '-' + plexId);
                         if (data.results && data.results.length > 0) {{
                             resultsDiv.innerHTML = data.results.map(r => `
-                                <div class="search-result" onclick="matchContent('${{plexId}}', '${{type}}', ${{r.id}}, '${{r.title || r.name}}')">
+                                <div class="search-result" onclick="matchContent('${{plexId}}', '${{type}}', ${{r.id}}, '${{r.title || r.name}}', false)">
                                     <div class="search-result-title">${{r.title || r.name}}</div>
                                     <div class="search-result-year">${{r.release_date || r.first_air_date || 'N/A'}}</div>
                                     <div class="search-result-overview">${{(r.overview || '').substring(0, 100)}}...</div>
@@ -2469,7 +2748,7 @@ def tmdb_matcher():
             }}, 500);
         }}
         
-        function matchContent(plexId, type, tmdbId, title) {{
+        function matchContent(plexId, type, tmdbId, title, isGlobalSearch) {{
             fetch('/admin/match-content', {{
                 method: 'POST',
                 headers: {{ 'Content-Type': 'application/json' }},
@@ -2478,10 +2757,22 @@ def tmdb_matcher():
             .then(r => r.json())
             .then(data => {{
                 if (data.success) {{
-                    const item = document.getElementById(type + '-' + plexId);
-                    item.classList.add('matched');
-                    item.innerHTML += '<div class="matched-badge">✓ Matched to: ' + title + '</div>';
-                    setTimeout(() => {{ item.style.display = 'none'; }}, 2000);
+                    if (isGlobalSearch) {{
+                        alert('✓ Successfully matched to: ' + title);
+                        document.getElementById('fix-dialog-' + plexId).innerHTML = '<div class="matched-badge">✓ Matched to: ' + title + '</div>';
+                    }} else {{
+                        const item = document.getElementById(type + '-' + plexId);
+                        item.classList.add('matched');
+                        item.innerHTML += '<div class="matched-badge">✓ Matched to: ' + title + '</div>';
+                        setTimeout(() => {{ 
+                            item.style.display = 'none';
+                            // Reload page if all items on current page are matched
+                            const remainingItems = document.querySelectorAll('.unmatched-item:not(.matched)').length;
+                            if (remainingItems === 0) {{
+                                location.reload();
+                            }}
+                        }}, 2000);
+                    }}
                 }} else {{
                     alert('Failed to match: ' + (data.error || 'Unknown error'));
                 }}
@@ -2518,6 +2809,60 @@ def search_tmdb_api():
             return jsonify({"results": []})
     except Exception as e:
         print(f"[ERROR] TMDb search error: {e}")
+        return jsonify({"results": []})
+
+@app.route('/admin/trigger-auto-match', methods=['POST'])
+@require_admin_login
+def trigger_auto_match():
+    """Manually trigger auto-matching"""
+    if auto_matching_running:
+        return jsonify({"success": False, "error": "Auto-matching already in progress"})
+    
+    # Run auto-match in background thread
+    threading.Thread(target=auto_match_content, daemon=True).start()
+    
+    return jsonify({"success": True})
+
+@app.route('/admin/search-plex')
+@require_admin_login
+def search_plex_api():
+    """Search Plex library"""
+    query = request.args.get('query', '').lower()
+    content_type = request.args.get('type', 'movie')
+    
+    if not query or not plex:
+        return jsonify({"results": []})
+    
+    results = []
+    
+    try:
+        for section in plex.library.sections():
+            plex_type = 'movie' if content_type == 'movie' else 'show'
+            if section.type == plex_type:
+                # Search in this section
+                for item in section.all():
+                    if query in item.title.lower():
+                        # Check if already matched
+                        cache_key = f"{content_type}_{item.ratingKey}" if content_type == 'movie' else f"series_{item.ratingKey}"
+                        cache_category = 'movies' if content_type == 'movie' else 'series'
+                        matched = cache_key in session_cache[cache_category]
+                        
+                        results.append({
+                            'id': item.ratingKey,
+                            'title': item.title,
+                            'year': item.year if hasattr(item, 'year') else '',
+                            'matched': matched
+                        })
+                        
+                        if len(results) >= 20:  # Limit to 20 results
+                            break
+            
+            if len(results) >= 20:
+                break
+        
+        return jsonify({"results": results})
+    except Exception as e:
+        print(f"[ERROR] Plex search error: {e}")
         return jsonify({"results": []})
 
 @app.route('/admin/match-content', methods=['POST'])
@@ -4029,6 +4374,14 @@ if __name__ == '__main__':
     print("  • Cached library sections (5-minute refresh)")
     print("  • Minimal response size for fast loading")
     print("  • Threaded request handling")
+    
+    # Start background auto-matcher
+    if TMDB_API_KEY and plex:
+        print("\n🎬 Starting TMDb auto-matcher")
+        print("  • Runs every 15 minutes")
+        print("  • Auto-matches unmatched content")
+        auto_matcher_thread = threading.Thread(target=background_auto_matcher, daemon=True)
+        auto_matcher_thread.start()
     
     print("=" * 60)
     
