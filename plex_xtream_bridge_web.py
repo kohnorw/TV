@@ -316,6 +316,40 @@ session_cache = {
     'sections_time': 0
 }
 
+# Cache file for persistence
+CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'tmdb_cache.json')
+
+def save_cache_to_disk():
+    """Save TMDb cache to disk"""
+    try:
+        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+        cache_data = {
+            'movies': session_cache['movies'],
+            'series': session_cache['series']
+        }
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(cache_data, f, indent=2)
+        print(f"[CACHE] Saved {len(cache_data['movies'])} movies and {len(cache_data['series'])} shows to disk")
+    except Exception as e:
+        print(f"[CACHE] Error saving cache: {e}")
+
+def load_cache_from_disk():
+    """Load TMDb cache from disk"""
+    try:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                cache_data = json.load(f)
+            session_cache['movies'] = cache_data.get('movies', {})
+            session_cache['series'] = cache_data.get('series', {})
+            print(f"[CACHE] Loaded {len(session_cache['movies'])} movies and {len(session_cache['series'])} shows from disk")
+            return True
+        else:
+            print("[CACHE] No cache file found, starting fresh")
+            return False
+    except Exception as e:
+        print(f"[CACHE] Error loading cache: {e}")
+        return False
+
 # Auto-matching state
 auto_matching_running = False
 last_auto_match_time = 0
@@ -359,6 +393,10 @@ def auto_match_content():
         
         print(f"[AUTO-MATCH] Completed! Matched {matched_count} items")
         last_auto_match_time = time.time()
+        
+        # Save cache to disk
+        if matched_count > 0:
+            save_cache_to_disk()
     
     except Exception as e:
         print(f"[AUTO-MATCH] Error: {e}")
@@ -2909,6 +2947,9 @@ def match_content_manual():
             cache_category = 'movies' if content_type == 'movie' else 'series'
             session_cache[cache_category][cache_key] = formatted_data
             
+            # Save to disk
+            save_cache_to_disk()
+            
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "TMDb API error"})
@@ -4373,6 +4414,10 @@ if __name__ == '__main__':
         print("\n⚠️  IMPORTANT: You'll be asked to change the default password on first login!")
     
     print("=" * 60)
+    
+    # Load TMDb cache from disk
+    print("\n💾 Loading TMDb cache...")
+    load_cache_from_disk()
     
     # Run with optimized settings for multiple concurrent users
     print("\n⚡ Optimized for multi-user performance")
