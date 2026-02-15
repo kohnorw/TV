@@ -376,16 +376,14 @@ def background_scanner():
     
     print("[SCAN] Background scanner started - checking every 15 minutes")
     
-    # Initial scan
-    scan_for_new_plex_content()
+    # Don't scan on startup, wait for first interval
+    last_scan_time = time.time()
     
     while True:
         time.sleep(900)  # 15 minutes = 900 seconds
         
-        current_time = time.time()
-        if current_time - last_scan_time >= 900:
-            print("[SCAN] Running 15-minute scan for new content...")
-            scan_for_new_plex_content()
+        print("[SCAN] Running 15-minute scan for new content...")
+        scan_for_new_plex_content()
 
 def get_poster_url(item, tmdb_data=None):
     """Get best available poster URL"""
