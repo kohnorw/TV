@@ -306,86 +306,11 @@ custom_categories = {
 }
 
 # Metadata cache for faster loading
-metadata_cache = {
+# Simple in-memory cache (per-session, not saved to disk)
+session_cache = {
     'movies': {},
-    'series': {},
-    'last_refresh': 0
+    'series': {}
 }
-
-CACHE_DURATION = 3600  # Cache for 1 hour
-CACHE_FILE = 'data/metadata_cache.json' if os.path.exists('data') else 'metadata_cache.json'
-
-def load_cache_from_disk():
-    """Load cached metadata from disk"""
-    global metadata_cache
-    
-    if os.path.exists(CACHE_FILE):
-        try:
-            with open(CACHE_FILE, 'r') as f:
-                loaded_cache = json.load(f)
-                
-                # MIGRATION: Fix old 'seriess' bug
-                if 'seriess' in loaded_cache and 'series' not in loaded_cache:
-                    print("[CACHE] Migrating 'seriess' -> 'series'")
-                    loaded_cache['series'] = loaded_cache.pop('seriess')
-                elif 'seriess' in loaded_cache and 'series' in loaded_cache:
-                    # Merge them
-                    print("[CACHE] Merging 'seriess' into 'series'")
-                    loaded_cache['series'].update(loaded_cache.pop('seriess'))
-                
-                metadata_cache.update(loaded_cache)
-            
-            movies_count = len(metadata_cache.get('movies', {}))
-            series_count = len(metadata_cache.get('series', {}))
-            print(f"[CACHE] Loaded from disk: {movies_count} movies, {series_count} shows")
-        except Exception as e:
-            print(f"[CACHE] Error loading cache from disk: {e}")
-            import traceback
-            traceback.print_exc()
-
-def save_cache_to_disk():
-    """Save cached metadata to disk"""
-    try:
-        # Create data directory if it doesn't exist
-        cache_dir = os.path.dirname(CACHE_FILE)
-        if cache_dir and not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-        
-        # DEBUG: Show what's actually in the cache
-        print(f"[CACHE-DEBUG] Cache keys: {list(metadata_cache.keys())}")
-        
-        with open(CACHE_FILE, 'w') as f:
-            json.dump(metadata_cache, f)
-        
-        movies_count = len(metadata_cache.get('movies', {}))
-        series_count = len(metadata_cache.get('series', {}))
-        seriess_count = len(metadata_cache.get('seriess', {}))  # Check for bug
-        
-        if seriess_count > 0:
-            print(f"[CACHE-BUG] Found 'seriess' key with {seriess_count} items! Migrating...")
-            metadata_cache['series'] = metadata_cache.pop('seriess')
-            series_count = len(metadata_cache.get('series', {}))
-        
-        print(f"[CACHE] Saved to disk: {movies_count} movies, {series_count} shows")
-    except Exception as e:
-        print(f"[CACHE] Error saving cache to disk: {e}")
-        import traceback
-        traceback.print_exc()
-
-def get_cached_or_fetch(cache_key, fetch_function, *args):
-    """Get data from cache or fetch if expired"""
-    current_time = time.time()
-    
-    # Check if cache exists and is still valid
-    if cache_key in metadata_cache and (current_time - metadata_cache.get('last_refresh', 0)) < CACHE_DURATION:
-        return metadata_cache.get(cache_key)
-    
-    # Fetch new data
-    data = fetch_function(*args)
-    metadata_cache[cache_key] = data
-    metadata_cache['last_refresh'] = current_time
-    
-    return data
 
 def get_poster_url(item, tmdb_data=None):
     """Get best available poster URL"""
@@ -1000,7 +925,6 @@ def get_series_for_category(category):
 # Load config and connect on startup
 load_config()
 connect_plex()
-load_cache_from_disk()  # Load cached metadata
 
 # Session storage
 sessions = {}
@@ -1082,16 +1006,19 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
         if not stream_url:
             return None
         
-        # Get TMDb enhanced metadata (with caching) - skip if requested for faster loading
-        cache_key = f"movie_{movie.ratingKey}"
+        # Get TMDb enhanced metadata with session cache
         tmdb_data = None
-        
         if not skip_tmdb and TMDB_API_KEY:
-            tmdb_data = metadata_cache['movies'].get(cache_key)
-            if not tmdb_data:
+            cache_key = f"movie_{movie.ratingKey}"
+            
+            # Check cache first
+            if cache_key in session_cache['movies']:
+                tmdb_data = session_cache['movies'][cache_key]
+            else:
+                # Fetch and cache
                 tmdb_data = enhance_movie_with_tmdb(movie)
                 if tmdb_data:
-                    metadata_cache['movies'][cache_key] = tmdb_data
+                    session_cache['movies'][cache_key] = tmdb_data
         
         # Get best poster and backdrop URLs
         poster_url = get_poster_url(movie, tmdb_data)
@@ -1112,7 +1039,8 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
             "category_ids": str(category_id),  # For tracking which category this belongs to
             "container_extension": "mkv",
             "custom_sid": "",
-            "direct_source": stream_url
+            "direct_source": stream_url,
+            "plex_direct": stream_url  # Direct file stream URL
         }
         
         # Add extended metadata if available
@@ -1138,13 +1066,19 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
 def format_series_for_xtream(show, category_id=2):
     """Format Plex TV show to Xtream Codes format"""
     try:
-        # Get TMDb enhanced metadata (with caching)
-        cache_key = f"series_{show.ratingKey}"
-        tmdb_data = metadata_cache['series'].get(cache_key)
-        
-        if not tmdb_data and TMDB_API_KEY:
-            tmdb_data = enhance_series_with_tmdb(show)
-            metadata_cache['series'][cache_key] = tmdb_data
+        # Get TMDb enhanced metadata with session cache
+        tmdb_data = None
+        if TMDB_API_KEY:
+            cache_key = f"series_{show.ratingKey}"
+            
+            # Check cache first
+            if cache_key in session_cache['series']:
+                tmdb_data = session_cache['series'][cache_key]
+            else:
+                # Fetch and cache
+                tmdb_data = enhance_series_with_tmdb(show)
+                if tmdb_data:
+                    session_cache['series'][cache_key] = tmdb_data
         
         # Get best poster and backdrop URLs
         poster_url = get_poster_url(show, tmdb_data)
@@ -1486,59 +1420,7 @@ DASHBOARD_HTML = """
                     <h3>Bridge URL</h3>
                     <p style="font-size: 14px;">{{ bridge_url }}</p>
                 </div>
-                
-                <div class="status-item" id="cache-status">
-                    <h3>Cache Status</h3>
-                    <p id="cache-text">Loading...</p>
-                </div>
             </div>
-            
-            <script>
-                // Update cache status
-                fetch('/admin/cache-status')
-                    .then(r => r.json())
-                    .then(data => {
-                        const text = `${data.movies_cached}/${data.movies_total} movies (${data.movies_percent}%)<br>${data.series_cached}/${data.series_total} shows (${data.series_percent}%)`;
-                        document.getElementById('cache-text').innerHTML = text;
-                        
-                        // Add warm cache button if not complete
-                        if (data.movies_percent < 100 || data.series_percent < 100) {
-                            const btn = document.createElement('button');
-                            btn.className = 'button';
-                            btn.style.marginTop = '10px';
-                            btn.style.padding = '5px 10px';
-                            btn.style.fontSize = '12px';
-                            btn.textContent = '🔥 Warm Cache';
-                            btn.onclick = () => {
-                                fetch('/admin/warm-cache', { method: 'POST', body: new FormData() })
-                                    .then(r => r.json())
-                                    .then(d => alert(d.message));
-                            };
-                            document.getElementById('cache-status').appendChild(btn);
-                        }
-                        
-                        // Add scan button
-                        const scanBtn = document.createElement('button');
-                        scanBtn.className = 'button';
-                        scanBtn.style.marginTop = '10px';
-                        scanBtn.style.marginLeft = '5px';
-                        scanBtn.style.padding = '5px 10px';
-                        scanBtn.style.fontSize = '12px';
-                        scanBtn.textContent = '🔍 Scan New';
-                        scanBtn.onclick = () => {
-                            fetch('/admin/scan-new-content', { method: 'POST' })
-                                .then(r => r.json())
-                                .then(d => {
-                                    alert(d.message);
-                                    setTimeout(() => location.reload(), 2000);
-                                });
-                        };
-                        document.getElementById('cache-status').appendChild(scanBtn);
-                    })
-                    .catch(() => {
-                        document.getElementById('cache-text').textContent = 'N/A';
-                    });
-            </script>
             
             {% if plex_connected and libraries %}
             <h3 style="margin-top: 20px; margin-bottom: 10px;">Your Libraries</h3>
@@ -2367,117 +2249,6 @@ def create_custom_category():
         print(f"Error creating category: {e}")
         return redirect(url_for('category_editor'))
 
-@app.route('/admin/clear-cache', methods=['POST'])
-@require_admin_login
-def clear_cache():
-    """Clear metadata cache"""
-    clear_metadata_cache()
-    return jsonify({"success": True, "message": "Cache cleared"})
-
-@app.route('/admin/warm-cache', methods=['POST'])
-@require_admin_login
-def trigger_cache_warming():
-    """Manually trigger cache warming for both movies and series"""
-    if not TMDB_API_KEY:
-        return jsonify({"success": False, "message": "TMDb API key not configured"})
-    
-    # Start worker if not running
-    start_cache_warming()
-    
-    # Queue both series and movies
-    print("[ADMIN] Manual cache warming triggered for series and movies")
-    threading.Thread(target=lambda: warm_cache_for_library('series', limit=None), daemon=True).start()
-    time.sleep(1)  # Give series a head start
-    threading.Thread(target=lambda: warm_cache_for_library('movie', limit=None), daemon=True).start()
-    
-    return jsonify({"success": True, "message": "Caching all series and movies in background (series first)"})
-
-@app.route('/admin/scan-new-content', methods=['POST'])
-@require_admin_login
-def trigger_content_scan():
-    """Manually trigger scan for new content"""
-    if not TMDB_API_KEY:
-        return jsonify({"success": False, "message": "TMDb API key not configured"})
-    
-    # Force scan by resetting timer
-    global last_library_scan
-    last_library_scan = 0
-    
-    # Start worker if not running
-    start_cache_warming()
-    
-    # Run scan
-    threading.Thread(target=scan_for_new_content, daemon=True).start()
-    
-    return jsonify({"success": True, "message": "Scanning for new content..."})
-
-@app.route('/admin/cache-status')
-@require_admin_login
-def cache_status():
-    """Get cache statistics"""
-    movies_cached = len(metadata_cache.get('movies', {}))
-    series_cached = len(metadata_cache.get('series', {}))
-    queue_size = cache_queue.qsize()
-    
-    # Get total counts from Plex
-    total_movies = 0
-    total_shows = 0
-    
-    if plex:
-        for section in plex.library.sections():
-            if section.type == 'movie':
-                total_movies += len(section.all())
-            elif section.type == 'show':
-                total_shows += len(section.all())
-    
-    return jsonify({
-        "movies_cached": movies_cached,
-        "movies_total": total_movies,
-        "movies_percent": round((movies_cached / total_movies * 100) if total_movies > 0 else 0, 1),
-        "series_cached": series_cached,
-        "series_total": total_shows,
-        "series_percent": round((series_cached / total_shows * 100) if total_shows > 0 else 0, 1),
-        "queue_size": queue_size,
-        "worker_active": cache_warming_active
-    })
-
-@app.route('/admin/cache-debug')
-@require_admin_login
-def cache_debug():
-    """Debug uncached items"""
-    uncached_movies = []
-    uncached_shows = []
-    
-    if plex:
-        # Check movies
-        for section in plex.library.sections():
-            if section.type == 'movie':
-                for movie in section.all():
-                    cache_key = f"movie_{movie.ratingKey}"
-                    if cache_key not in metadata_cache.get('movies', {}):
-                        uncached_movies.append({
-                            'id': movie.ratingKey,
-                            'title': movie.title,
-                            'year': movie.year if hasattr(movie, 'year') else 'N/A'
-                        })
-            elif section.type == 'show':
-                for show in section.all():
-                    cache_key = f"series_{show.ratingKey}"
-                    if cache_key not in metadata_cache.get('series', {}):
-                        uncached_shows.append({
-                            'id': show.ratingKey,
-                            'title': show.title,
-                            'year': show.year if hasattr(show, 'year') else 'N/A'
-                        })
-    
-    return jsonify({
-        "uncached_movies": uncached_movies[:20],  # First 20
-        "uncached_shows": uncached_shows[:20],
-        "total_uncached_movies": len(uncached_movies),
-        "total_uncached_shows": len(uncached_shows),
-        "queue_size": cache_queue.qsize()
-    })
-
 @app.route('/admin/logout')
 def admin_logout():
     """Logout"""
@@ -2599,10 +2370,6 @@ def admin_test():
 @app.route('/player_api.php')
 def player_api():
     """Main Xtream Codes API endpoint"""
-    # Auto-scan for new content periodically (rate-limited internally)
-    if cache_warming_active:
-        threading.Thread(target=scan_for_new_content, daemon=True).start()
-    
     if not plex:
         return jsonify({"error": "Plex server not connected"}), 500
     
@@ -2722,8 +2489,8 @@ def player_api():
                         movies_to_process = all_movies[:limit] if limit > 0 else all_movies
                         
                         for movie in movies_to_process:
-                            # Skip TMDb for faster listing - will fetch on-demand when viewing details
-                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=True)
+                            # Fetch TMDb data on-demand (cached if already fetched)
+                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=False)
                             if formatted:
                                 movies.append(formatted)
                     except Exception as e:
@@ -2736,8 +2503,8 @@ def player_api():
                     for movie in section.all():
                         if limit > 0 and count >= limit:
                             break
-                        # Skip TMDb for faster listing
-                        formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=True)
+                        # Fetch TMDb data on-demand (cached)
+                        formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
                         if formatted:
                             movies.append(formatted)
                             count += 1
@@ -3925,55 +3692,6 @@ if __name__ == '__main__':
     
     if ADMIN_PASSWORD == 'admin123':
         print("\n⚠️  IMPORTANT: You'll be asked to change the default password on first login!")
-    
-    print("=" * 60)
-    
-    # Start background cache warming
-    if TMDB_API_KEY and plex:
-        print("\n🔥 Starting background cache warming...")
-        start_cache_warming()
-        
-        # Initialize tracking of known items
-        print("   • Initializing content tracking...")
-        initialize_known_items()
-        
-        # Check if this is first run (cache is empty)
-        is_first_run = len(metadata_cache.get('movies', {})) == 0 and len(metadata_cache.get('series', {})) == 0
-        
-        if is_first_run:
-            print("\n🎯 FIRST RUN DETECTED - Pre-caching entire library!")
-            print("   This will take some time but will make everything super fast.")
-            print("   Progress will be logged as items are cached.")
-            print("")
-            
-            # Queue entire library for caching - TV SERIES FIRST FOR TESTING
-            print("   🧪 TEST MODE: Caching TV series first, then movies")
-            threading.Thread(target=lambda: warm_cache_for_library('series', limit=None), daemon=True).start()
-            time.sleep(2)  # Give series a head start
-            threading.Thread(target=lambda: warm_cache_for_library('movie', limit=None), daemon=True).start()
-            
-            # Get counts
-            total_movies = 0
-            total_shows = 0
-            for section in plex.library.sections():
-                if section.type == 'movie':
-                    total_movies += len(section.all())
-                elif section.type == 'show':
-                    total_shows += len(section.all())
-            
-            print(f"   📊 Queuing {total_shows} shows FIRST, then {total_movies} movies")
-            print(f"   ⏱️  Estimated time: {(total_movies + total_shows) // 2} seconds (~2 items/sec)")
-            print(f"   📈 Check dashboard for progress: http://{BRIDGE_HOST}:{BRIDGE_PORT}/admin")
-        else:
-            # Not first run - just warm recent items - TV SERIES FIRST
-            print("\n   • Cache already exists - warming recent additions (TV series first)")
-            threading.Thread(target=lambda: warm_cache_for_library('series', limit=50), daemon=True).start()
-            time.sleep(1)  # Give series a head start
-            threading.Thread(target=lambda: warm_cache_for_library('movie', limit=50), daemon=True).start()
-            
-            movies_cached = len(metadata_cache.get('movies', {}))
-            series_cached = len(metadata_cache.get('series', {}))
-            print(f"   • Currently cached: {movies_cached} movies, {series_cached} shows")
     
     print("=" * 60)
     
