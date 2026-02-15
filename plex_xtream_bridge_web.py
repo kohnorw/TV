@@ -1080,6 +1080,7 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
             return None
         
         # Get TMDb enhanced metadata with session cache
+        # Set skip_tmdb=True for much faster loading (uses only Plex data)
         tmdb_data = None
         if not skip_tmdb and TMDB_API_KEY:
             cache_key = f"movie_{movie.ratingKey}"
@@ -1088,7 +1089,7 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
             if cache_key in session_cache['movies']:
                 tmdb_data = session_cache['movies'][cache_key]
             else:
-                # Fetch and cache
+                # Fetch and cache (this is slow on first load)
                 tmdb_data = enhance_movie_with_tmdb(movie)
                 if tmdb_data:
                     session_cache['movies'][cache_key] = tmdb_data
@@ -2562,8 +2563,9 @@ def player_api():
                         movies_to_process = all_movies[:limit] if limit > 0 else all_movies
                         
                         for movie in movies_to_process:
-                            # Fetch TMDb data on-demand (cached if already fetched)
-                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=False)
+                            # Skip TMDb by default for fast loading (uses Plex metadata only)
+                            # TMDb data will be cached by background scanner
+                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=True)
                             if formatted:
                                 movies.append(formatted)
                     except Exception as e:
@@ -2576,8 +2578,8 @@ def player_api():
                     for movie in section.all():
                         if limit > 0 and count >= limit:
                             break
-                        # Fetch TMDb data on-demand (cached)
-                        formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
+                        # Skip TMDb for fast loading
+                        formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=True)
                         if formatted:
                             movies.append(formatted)
                             count += 1
