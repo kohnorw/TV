@@ -1073,67 +1073,41 @@ def get_stream_url(item, session_info=""):
     return stream_url
 
 def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
-    """Format Plex movie to Xtream Codes format"""
+    """Format Plex movie to Xtream Codes format - optimized for fast player loading"""
     try:
         stream_url = get_stream_url(movie)
         if not stream_url:
             return None
         
-        # Use only Plex metadata - no TMDb for maximum speed
-        poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'thumb') and movie.thumb else ""
-        backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'art') and movie.art else ""
-        
-        # Simple, fast format with just Plex data
+        # Minimal format - only essential fields for fast loading
         formatted = {
-            "num": movie.ratingKey,
-            "name": movie.title,
-            "stream_type": "movie",
             "stream_id": movie.ratingKey,
-            "stream_icon": poster_url,
-            "cover_big": backdrop_url,
-            "rating": str(movie.rating or 0) if hasattr(movie, 'rating') else "0",
-            "rating_5based": round(float(movie.rating or 0) / 2, 1) if hasattr(movie, 'rating') else 0,
+            "name": movie.title,
+            "stream_icon": f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'thumb') and movie.thumb else "",
             "added": str(int(movie.addedAt.timestamp())) if hasattr(movie, 'addedAt') and movie.addedAt else "",
             "category_id": str(category_id),
-            "category_ids": str(category_id),
             "container_extension": "mkv",
-            "custom_sid": "",
-            "direct_source": stream_url,
-            "plex_direct": stream_url
+            "direct_source": stream_url
         }
         
         return formatted
     except Exception as e:
-        print(f"Error formatting movie {movie.title}: {e}")
         return None
 
 def format_series_for_xtream(show, category_id=2):
-    """Format Plex TV show to Xtream Codes format"""
+    """Format Plex TV show to Xtream Codes format - optimized for fast player loading"""
     try:
-        # Use only Plex metadata - no TMDb for maximum speed
-        poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'thumb') and show.thumb else ""
-        backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'art') and show.art else ""
-        
+        # Minimal format - only essential fields
         formatted = {
-            "num": show.ratingKey,
-            "name": show.title,
             "series_id": show.ratingKey,
-            "cover": poster_url,
-            "cover_big": backdrop_url,
-            "plot": show.summary if hasattr(show, 'summary') else "",
-            "cast": ", ".join([actor.tag for actor in show.roles[:5]]) if hasattr(show, 'roles') and show.roles else "",
-            "director": show.directors[0].tag if hasattr(show, 'directors') and show.directors else "",
-            "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
-            "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
-            "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
-            "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
-            "category_id": str(category_id),
-            "category_ids": str(category_id),
-            "last_modified": str(int(show.updatedAt.timestamp())) if hasattr(show, 'updatedAt') and show.updatedAt else ""
+            "name": show.title,
+            "cover": f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'thumb') and show.thumb else "",
+            "category_id": str(category_id)
         }
         
         return formatted
     except Exception as e:
+        return None
         print(f"Error formatting series {show.title}: {e}")
         import traceback
         traceback.print_exc()
