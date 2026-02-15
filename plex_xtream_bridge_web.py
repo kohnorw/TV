@@ -163,7 +163,17 @@ def cache_worker():
                 
                 if tmdb_data:
                     # Ensure cache structure exists
-                    cache_category = item_type + 's'  # 'movies' or 'series'
+                    cache_category = item_type + 's'  # 'movies' or 'seriess' - WAIT, THIS IS WRONG!
+                    
+                    # Fix: 'series' + 's' = 'seriess' which is wrong!
+                    # Should be: 'movie' -> 'movies', 'series' -> 'series' (already plural)
+                    if item_type == 'movie':
+                        cache_category = 'movies'
+                    elif item_type == 'series':
+                        cache_category = 'series'  # Don't add 's'
+                    else:
+                        cache_category = item_type + 's'
+                    
                     if cache_category not in metadata_cache:
                         metadata_cache[cache_category] = {}
                     
