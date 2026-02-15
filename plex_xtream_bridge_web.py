@@ -1091,28 +1091,49 @@ def get_stream_url(item, session_info=""):
     return stream_url
 
 def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
-    """Format Plex movie to Xtream Codes format - lightweight for listing"""
+    """Format Plex movie to Xtream Codes format - with TMDb posters"""
     try:
         stream_url = get_stream_url(movie)
         if not stream_url:
             return None
         
-        # Use Plex's built-in URL methods for proper poster/backdrop URLs
-        try:
-            poster_url = movie.thumbUrl if hasattr(movie, 'thumbUrl') else ""
-            if not poster_url and hasattr(movie, 'thumb'):
-                poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            poster_url = ""
+        # Get TMDb data for high-quality posters (with caching)
+        tmdb_data = None
+        if TMDB_API_KEY and not skip_tmdb:
+            cache_key = f"movie_{movie.ratingKey}"
+            
+            # Check cache first
+            if cache_key in session_cache['movies']:
+                tmdb_data = session_cache['movies'][cache_key]
+            else:
+                # Fetch and cache
+                tmdb_data = enhance_movie_with_tmdb(movie)
+                if tmdb_data:
+                    session_cache['movies'][cache_key] = tmdb_data
         
-        try:
-            backdrop_url = movie.artUrl if hasattr(movie, 'artUrl') else ""
-            if not backdrop_url and hasattr(movie, 'art'):
-                backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            backdrop_url = ""
+        # Use TMDb posters if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('poster_path'):
+            poster_url = tmdb_data['poster_path']
+        else:
+            try:
+                poster_url = movie.thumbUrl if hasattr(movie, 'thumbUrl') else ""
+                if not poster_url and hasattr(movie, 'thumb'):
+                    poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                poster_url = ""
         
-        # Lightweight format for fast listing - only basic fields
+        # Use TMDb backdrop if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('backdrop_path'):
+            backdrop_url = tmdb_data['backdrop_path']
+        else:
+            try:
+                backdrop_url = movie.artUrl if hasattr(movie, 'artUrl') else ""
+                if not backdrop_url and hasattr(movie, 'art'):
+                    backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                backdrop_url = ""
+        
+        # Format with TMDb posters
         formatted = {
             "stream_id": movie.ratingKey,
             "num": movie.ratingKey,
@@ -1131,24 +1152,45 @@ def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
         return None
 
 def format_series_for_xtream(show, category_id=2):
-    """Format Plex TV show to Xtream Codes format - with Plex metadata"""
+    """Format Plex TV show to Xtream Codes format - with TMDb posters"""
     try:
-        # Use Plex's built-in URL methods for proper poster/backdrop URLs
-        try:
-            poster_url = show.thumbUrl if hasattr(show, 'thumbUrl') else ""
-            if not poster_url and hasattr(show, 'thumb'):
-                poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            poster_url = ""
+        # Get TMDb data for high-quality posters (with caching)
+        tmdb_data = None
+        if TMDB_API_KEY:
+            cache_key = f"series_{show.ratingKey}"
+            
+            # Check cache first
+            if cache_key in session_cache['series']:
+                tmdb_data = session_cache['series'][cache_key]
+            else:
+                # Fetch and cache
+                tmdb_data = enhance_series_with_tmdb(show)
+                if tmdb_data:
+                    session_cache['series'][cache_key] = tmdb_data
         
-        try:
-            backdrop_url = show.artUrl if hasattr(show, 'artUrl') else ""
-            if not backdrop_url and hasattr(show, 'art'):
-                backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}"
-        except:
-            backdrop_url = ""
+        # Use TMDb posters if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('poster_path'):
+            poster_url = tmdb_data['poster_path']
+        else:
+            try:
+                poster_url = show.thumbUrl if hasattr(show, 'thumbUrl') else ""
+                if not poster_url and hasattr(show, 'thumb'):
+                    poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                poster_url = ""
         
-        # Full Plex metadata
+        # Use TMDb backdrop if available, otherwise Plex
+        if tmdb_data and tmdb_data.get('backdrop_path'):
+            backdrop_url = tmdb_data['backdrop_path']
+        else:
+            try:
+                backdrop_url = show.artUrl if hasattr(show, 'artUrl') else ""
+                if not backdrop_url and hasattr(show, 'art'):
+                    backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}"
+            except:
+                backdrop_url = ""
+        
+        # Full metadata with TMDb posters
         formatted = {
             "series_id": show.ratingKey,
             "num": show.ratingKey,
@@ -2499,9 +2541,8 @@ def player_api():
                         movies_to_process = all_movies[:limit] if limit > 0 else all_movies
                         
                         for movie in movies_to_process:
-                            # Skip TMDb by default for fast loading (uses Plex metadata only)
-                            # TMDb data will be cached by background scanner
-                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=True)
+                            # Fetch TMDb for high-quality posters (cached after first load)
+                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=False)
                             if formatted:
                                 movies.append(formatted)
                     except Exception as e:
@@ -2520,7 +2561,8 @@ def player_api():
                         for movie in section.search():
                             if count >= max_limit:
                                 break
-                            formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=True)
+                            # Fetch TMDb for high-quality posters (cached)
+                            formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
                             if formatted:
                                 movies.append(formatted)
                                 count += 1
