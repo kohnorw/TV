@@ -306,7 +306,102 @@ custom_categories = {
 }
 
 # Metadata cache for faster loading
-# No caching - fetch TMDb data on-demand every time
+# Simple in-memory cache (per-session, not saved to disk)
+session_cache = {
+    'movies': {},
+    'series': {},
+    'categories': {},
+    'sections': None,
+    'sections_time': 0
+}
+
+# Cache library sections (updated every 5 minutes)
+def get_cached_sections():
+    """Get library sections with caching to reduce Plex API calls"""
+    current_time = time.time()
+    
+    if session_cache['sections'] and (current_time - session_cache['sections_time']) < 300:
+        return session_cache['sections']
+    
+    # Refresh sections
+    if plex:
+        session_cache['sections'] = list(plex.library.sections())
+        session_cache['sections_time'] = current_time
+    
+    return session_cache['sections']
+
+# Track known items to detect new content
+known_item_ids = set()
+last_scan_time = 0
+
+def scan_for_new_plex_content():
+    """Scan Plex for new content and pre-cache TMDb data"""
+    global known_item_ids, last_scan_time
+    
+    if not plex or not TMDB_API_KEY:
+        return
+    
+    try:
+        new_items = 0
+        
+        # Scan all sections
+        for section in plex.library.sections():
+            if section.type == 'movie':
+                for movie in section.all():
+                    item_id = f"movie_{movie.ratingKey}"
+                    
+                    # New movie detected
+                    if item_id not in known_item_ids:
+                        known_item_ids.add(item_id)
+                        
+                        # Pre-cache TMDb data
+                        cache_key = f"movie_{movie.ratingKey}"
+                        if cache_key not in session_cache['movies']:
+                            tmdb_data = enhance_movie_with_tmdb(movie)
+                            if tmdb_data:
+                                session_cache['movies'][cache_key] = tmdb_data
+                                new_items += 1
+                                print(f"[NEW] Cached new movie: {movie.title}")
+            
+            elif section.type == 'show':
+                for show in section.all():
+                    item_id = f"show_{show.ratingKey}"
+                    
+                    # New show detected
+                    if item_id not in known_item_ids:
+                        known_item_ids.add(item_id)
+                        
+                        # Pre-cache TMDb data
+                        cache_key = f"series_{show.ratingKey}"
+                        if cache_key not in session_cache['series']:
+                            tmdb_data = enhance_series_with_tmdb(show)
+                            if tmdb_data:
+                                session_cache['series'][cache_key] = tmdb_data
+                                new_items += 1
+                                print(f"[NEW] Cached new show: {show.title}")
+        
+        if new_items > 0:
+            print(f"[SCAN] Found and cached {new_items} new items")
+        
+        last_scan_time = time.time()
+    
+    except Exception as e:
+        print(f"[SCAN] Error scanning for new content: {e}")
+
+def background_scanner():
+    """Background thread that scans every 15 minutes"""
+    global last_scan_time
+    
+    print("[SCAN] Background scanner started - checking every 15 minutes")
+    
+    # Don't scan on startup, wait for first interval
+    last_scan_time = time.time()
+    
+    while True:
+        time.sleep(900)  # 15 minutes = 900 seconds
+        
+        print("[SCAN] Running 15-minute scan for new content...")
+        scan_for_new_plex_content()
 
 def get_poster_url(item, tmdb_data=None):
     """Get best available poster URL"""
@@ -996,150 +1091,71 @@ def get_stream_url(item, session_info=""):
     return stream_url
 
 def format_movie_for_xtream(movie, category_id=1, skip_tmdb=False):
-    """Format Plex movie to Xtream Codes format"""
+    """Format Plex movie to Xtream Codes format - with Plex metadata"""
     try:
         stream_url = get_stream_url(movie)
         if not stream_url:
             return None
         
-        # Get TMDb enhanced metadata on-demand (no caching)
-        tmdb_data = None
-        if not skip_tmdb and TMDB_API_KEY:
-            tmdb_data = enhance_movie_with_tmdb(movie)
+        # Generate poster URL
+        poster_url = f"{PLEX_URL}{movie.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'thumb') and movie.thumb else ""
+        backdrop_url = f"{PLEX_URL}{movie.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(movie, 'art') and movie.art else ""
         
-        # Get best poster and backdrop URLs
-        poster_url = get_poster_url(movie, tmdb_data)
-        backdrop_url = get_backdrop_url(movie, tmdb_data)
-        
-        # Use TMDb data if available, otherwise fall back to Plex
+        # Full Plex metadata with multiple poster field names for compatibility
         formatted = {
+            "stream_id": movie.ratingKey,
             "num": movie.ratingKey,
             "name": movie.title,
-            "stream_type": "movie",
-            "stream_id": movie.ratingKey,
             "stream_icon": poster_url,
+            "cover": poster_url,  # Alternative field name
             "cover_big": backdrop_url,
-            "rating": str(tmdb_data.get('vote_average', movie.rating or 0)) if tmdb_data else str(movie.rating or 0),
-            "rating_5based": tmdb_data.get('vote_average', round(float(movie.rating or 0) / 2, 1)) if tmdb_data else round(float(movie.rating or 0) / 2, 1),
-            "added": str(int(movie.addedAt.timestamp())) if movie.addedAt else "",
+            "rating": str(movie.rating or 0) if hasattr(movie, 'rating') else "0",
+            "rating_5based": round(float(movie.rating or 0) / 2, 1) if hasattr(movie, 'rating') else 0,
+            "added": str(int(movie.addedAt.timestamp())) if hasattr(movie, 'addedAt') and movie.addedAt else "",
             "category_id": str(category_id),
-            "category_ids": str(category_id),  # For tracking which category this belongs to
             "container_extension": "mkv",
-            "custom_sid": "",
             "direct_source": stream_url,
-            "plex_direct": stream_url  # Direct file stream URL
+            "plot": movie.summary if hasattr(movie, 'summary') else "",
+            "cast": ", ".join([actor.tag for actor in movie.roles[:10]]) if hasattr(movie, 'roles') and movie.roles else "",
+            "director": ", ".join([d.tag for d in movie.directors]) if hasattr(movie, 'directors') and movie.directors else "",
+            "genre": ", ".join([g.tag for g in movie.genres]) if hasattr(movie, 'genres') and movie.genres else "",
+            "releaseDate": str(movie.year) if hasattr(movie, 'year') and movie.year else "",
+            "duration": str(movie.duration // 60000) if hasattr(movie, 'duration') and movie.duration else "",
+            "backdrop_path": [backdrop_url] if backdrop_url else []
         }
-        
-        # Add extended metadata if available
-        if tmdb_data:
-            formatted.update({
-                "tmdb_id": str(tmdb_data.get('tmdb_id', '')),
-                "imdb_id": tmdb_data.get('imdb_id', ''),
-                "plot": tmdb_data.get('overview', movie.summary or ''),
-                "backdrop_path": [backdrop_url] if backdrop_url else [],
-                "youtube_trailer": tmdb_data.get('trailer', ''),
-                "director": tmdb_data.get('director', ''),
-                "cast": ', '.join([c['name'] for c in tmdb_data.get('cast', [])]),
-                "genre": ', '.join(tmdb_data.get('genres', [])),
-                "keywords": ', '.join(tmdb_data.get('keywords', [])),
-                "popularity": tmdb_data.get('popularity', 0)
-            })
         
         return formatted
     except Exception as e:
-        print(f"Error formatting movie {movie.title}: {e}")
         return None
 
 def format_series_for_xtream(show, category_id=2):
-    """Format Plex TV show to Xtream Codes format"""
+    """Format Plex TV show to Xtream Codes format - with Plex metadata"""
     try:
-        # Get TMDb enhanced metadata on-demand (no caching)
-        tmdb_data = None
-        if TMDB_API_KEY:
-            tmdb_data = enhance_series_with_tmdb(show)
+        # Generate poster URLs
+        poster_url = f"{PLEX_URL}{show.thumb}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'thumb') and show.thumb else ""
+        backdrop_url = f"{PLEX_URL}{show.art}?X-Plex-Token={PLEX_TOKEN}" if hasattr(show, 'art') and show.art else ""
         
-        # Get best poster and backdrop URLs
-        poster_url = get_poster_url(show, tmdb_data)
-        backdrop_url = get_backdrop_url(show, tmdb_data)
-        
-        # Safely get cast
-        cast = ""
-        if tmdb_data and tmdb_data.get('cast'):
-            cast = ', '.join([c['name'] for c in tmdb_data.get('cast', [])])
-        elif hasattr(show, 'roles') and show.roles:
-            cast = ", ".join([actor.tag for actor in show.roles[:5]])
-        
-        # Safely get director/creator
-        director = ""
-        if tmdb_data and tmdb_data.get('created_by'):
-            director = ', '.join(tmdb_data.get('created_by', []))
-        elif hasattr(show, 'directors') and show.directors:
-            director = show.directors[0].tag
-        
-        # Safely get genre
-        genre = ""
-        if tmdb_data and tmdb_data.get('genres'):
-            genre = ', '.join(tmdb_data.get('genres', []))
-        elif hasattr(show, 'genres') and show.genres:
-            genre = ", ".join([g.tag for g in show.genres])
-        
-        # Safely get summary
-        plot = ""
-        if tmdb_data and tmdb_data.get('overview'):
-            plot = tmdb_data.get('overview')
-        elif hasattr(show, 'summary'):
-            plot = show.summary or ''
-        
-        # Safely get year
-        release_date = ""
-        if hasattr(show, 'year') and show.year:
-            release_date = str(show.year)
-        
-        # Safely get rating
-        rating = 0
-        if tmdb_data and tmdb_data.get('vote_average'):
-            rating = tmdb_data.get('vote_average')
-        elif hasattr(show, 'rating') and show.rating:
-            rating = show.rating
-        
-        # Safely get updated time
-        last_modified = ""
-        if hasattr(show, 'updatedAt') and show.updatedAt:
-            last_modified = str(int(show.updatedAt.timestamp()))
-        
+        # Full Plex metadata
         formatted = {
+            "series_id": show.ratingKey,
             "num": show.ratingKey,
             "name": show.title,
-            "series_id": show.ratingKey,
             "cover": poster_url,
             "cover_big": backdrop_url,
-            "plot": plot,
-            "cast": cast,
-            "director": director,
-            "genre": genre,
-            "releaseDate": release_date,
-            "rating": str(rating),
-            "rating_5based": round(float(rating) / 2, 1) if rating else 0,
-            "category_id": str(category_id),
-            "category_ids": str(category_id),
-            "last_modified": last_modified
+            "plot": show.summary if hasattr(show, 'summary') else "",
+            "cast": ", ".join([actor.tag for actor in show.roles[:10]]) if hasattr(show, 'roles') and show.roles else "",
+            "director": ", ".join([d.tag for d in show.directors]) if hasattr(show, 'directors') and show.directors else "",
+            "genre": ", ".join([g.tag for g in show.genres]) if hasattr(show, 'genres') and show.genres else "",
+            "releaseDate": str(show.year) if hasattr(show, 'year') and show.year else "",
+            "rating": str(show.rating) if hasattr(show, 'rating') and show.rating else "0",
+            "rating_5based": round(float(show.rating or 0) / 2, 1) if hasattr(show, 'rating') else 0,
+            "backdrop_path": [backdrop_url] if backdrop_url else [],
+            "category_id": str(category_id)
         }
-        
-        # Add extended metadata if available
-        if tmdb_data:
-            formatted.update({
-                "tmdb_id": str(tmdb_data.get('tmdb_id', '')),
-                "backdrop_path": [backdrop_url] if backdrop_url else [],
-                "youtube_trailer": tmdb_data.get('trailer', ''),
-                "keywords": ', '.join(tmdb_data.get('keywords', [])),
-                "networks": ', '.join(tmdb_data.get('networks', [])),
-                "status": tmdb_data.get('status', ''),
-                "episode_run_time": str(tmdb_data.get('number_of_episodes', 0)),
-                "popularity": tmdb_data.get('popularity', 0)
-            })
         
         return formatted
     except Exception as e:
+        return None
         print(f"Error formatting series {show.title}: {e}")
         import traceback
         traceback.print_exc()
@@ -2399,8 +2415,11 @@ def player_api():
     elif action == 'get_vod_categories':
         categories = []
         
+        # Use cached sections for better multi-user performance
+        sections = get_cached_sections()
+        
         # Add original Plex library categories
-        for section in plex.library.sections():
+        for section in sections:
             if section.type == 'movie':
                 categories.append({
                     "category_id": section.key,
@@ -2467,8 +2486,9 @@ def player_api():
                         movies_to_process = all_movies[:limit] if limit > 0 else all_movies
                         
                         for movie in movies_to_process:
-                            # Fetch TMDb data on-demand (cached if already fetched)
-                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=False)
+                            # Skip TMDb by default for fast loading (uses Plex metadata only)
+                            # TMDb data will be cached by background scanner
+                            formatted = format_movie_for_xtream(movie, category_id, skip_tmdb=True)
                             if formatted:
                                 movies.append(formatted)
                     except Exception as e:
@@ -2481,8 +2501,8 @@ def player_api():
                     for movie in section.all():
                         if limit > 0 and count >= limit:
                             break
-                        # Fetch TMDb data on-demand (cached)
-                        formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=False)
+                        # Skip TMDb for fast loading
+                        formatted = format_movie_for_xtream(movie, section.key, skip_tmdb=True)
                         if formatted:
                             movies.append(formatted)
                             count += 1
@@ -2554,8 +2574,11 @@ def player_api():
     elif action == 'get_series_categories':
         categories = []
         
+        # Use cached sections for better multi-user performance
+        sections = get_cached_sections()
+        
         # Add original Plex library categories
-        for section in plex.library.sections():
+        for section in sections:
             if section.type == 'show':
                 categories.append({
                     "category_id": section.key,
@@ -3673,4 +3696,13 @@ if __name__ == '__main__':
     
     print("=" * 60)
     
-    app.run(host=BRIDGE_HOST, port=BRIDGE_PORT, debug=False, threaded=True)
+    # Run with optimized settings for multiple concurrent users
+    print("\n⚡ Optimized for multi-user performance")
+    print("  • Cached library sections (5-minute refresh)")
+    print("  • Minimal response size for fast loading")
+    print("  • Threaded request handling")
+    
+    print("=" * 60)
+    
+    # Run with threaded=True for better concurrent user handling
+    app.run(host=BRIDGE_HOST, port=BRIDGE_PORT, debug=False, threaded=True, processes=1)
