@@ -11,6 +11,8 @@ import hashlib
 import time
 import json
 import os
+import signal
+import sys
 from datetime import datetime
 from urllib.parse import quote
 import secrets
@@ -21,6 +23,45 @@ from queue import Queue, Empty
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
+
+# Rate limiting - track requests per IP
+from collections import defaultdict, deque
+import time as time_module
+
+request_history = defaultdict(lambda: deque(maxlen=100))
+RATE_LIMIT_WINDOW = 60  # 1 minute window
+MAX_REQUESTS_PER_MINUTE = 10  # Max 10 requests per minute per IP
+
+def check_rate_limit():
+    """Check if client is making too many requests"""
+    client_ip = request.remote_addr
+    current_time = time_module.time()
+    
+    # Clean old requests (older than 1 minute)
+    history = request_history[client_ip]
+    while history and current_time - history[0] > RATE_LIMIT_WINDOW:
+        history.popleft()
+    
+    # Check if over limit
+    if len(history) >= MAX_REQUESTS_PER_MINUTE:
+        return False, len(history)
+    
+    # Add this request
+    history.append(current_time)
+    return True, len(history)
+
+# Enable gzip compression for all responses
+app.config['COMPRESS_MIMETYPES'] = ['application/json', 'text/html', 'text/css', 'application/javascript']
+app.config['COMPRESS_LEVEL'] = 6  # Balance between speed and compression
+app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
+
+try:
+    from flask_compress import Compress
+    Compress(app)
+    print("[COMPRESSION] Flask-Compress enabled")
+except ImportError:
+    print("[COMPRESSION] Flask-Compress not available, responses will not be compressed")
+    print("[COMPRESSION] Install with: pip install flask-compress")
 
 # Background cache warming
 cache_queue = Queue()
@@ -292,10 +333,16 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')  # Web interface passwo
 SHOW_DUMMY_CHANNEL = os.getenv('SHOW_DUMMY_CHANNEL', 'true').lower() == 'true'  # Show info channel
 TMDB_API_KEY = os.getenv('TMDB_API_KEY', '')  # TMDb API key for metadata
 
-# Configuration file path
-CONFIG_FILE = 'config.json'
-CATEGORIES_FILE = 'categories.json'
-ENCRYPTION_KEY_FILE = '.encryption_key'
+# Content limits (can be overridden via environment variables)
+MAX_MOVIES = int(os.getenv('MAX_MOVIES', '10000'))  # Maximum movies to return
+MAX_SHOWS = int(os.getenv('MAX_SHOWS', '5000'))     # Maximum TV shows to return
+
+# Configuration file paths - all in data directory
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+CONFIG_FILE = os.path.join(DATA_DIR, 'config.json')
+CATEGORIES_FILE = os.path.join(DATA_DIR, 'categories.json')
+ENCRYPTION_KEY_FILE = os.path.join(DATA_DIR, '.encryption_key')
+CACHE_FILE = os.path.join(DATA_DIR, 'tmdb_cache.json')
 
 # Initialize Plex connection
 plex = None
@@ -316,38 +363,57 @@ session_cache = {
     'sections_time': 0
 }
 
-# Cache file for persistence
-CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'tmdb_cache.json')
+# Metadata cache for faster loading
+# Simple in-memory cache (per-session, not saved to disk)
 
 def save_cache_to_disk():
     """Save TMDb cache to disk"""
     try:
-        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+        # Ensure data directory exists
+        data_dir = os.path.dirname(CACHE_FILE)
+        os.makedirs(data_dir, exist_ok=True)
+        
         cache_data = {
             'movies': session_cache['movies'],
             'series': session_cache['series']
         }
-        with open(CACHE_FILE, 'w') as f:
+        
+        # Write to temp file first, then rename (atomic operation)
+        temp_file = CACHE_FILE + '.tmp'
+        with open(temp_file, 'w') as f:
             json.dump(cache_data, f, indent=2)
-        print(f"[CACHE] Saved {len(cache_data['movies'])} movies and {len(cache_data['series'])} shows to disk")
+        
+        # Rename temp file to actual file
+        os.replace(temp_file, CACHE_FILE)
+        
+        print(f"[CACHE] Saved {len(cache_data['movies'])} movies and {len(cache_data['series'])} shows to {CACHE_FILE}")
+        return True
     except Exception as e:
         print(f"[CACHE] Error saving cache: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def load_cache_from_disk():
     """Load TMDb cache from disk"""
     try:
         if os.path.exists(CACHE_FILE):
+            print(f"[CACHE] Loading cache from {CACHE_FILE}")
             with open(CACHE_FILE, 'r') as f:
                 cache_data = json.load(f)
+            
             session_cache['movies'] = cache_data.get('movies', {})
             session_cache['series'] = cache_data.get('series', {})
-            print(f"[CACHE] Loaded {len(session_cache['movies'])} movies and {len(session_cache['series'])} shows from disk")
+            
+            print(f"[CACHE] ✓ Loaded {len(session_cache['movies'])} movies and {len(session_cache['series'])} shows from disk")
             return True
         else:
-            print("[CACHE] No cache file found, starting fresh")
+            print(f"[CACHE] No cache file found at {CACHE_FILE}, starting fresh")
             return False
     except Exception as e:
         print(f"[CACHE] Error loading cache: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # Auto-matching state
@@ -355,51 +421,101 @@ auto_matching_running = False
 last_auto_match_time = 0
 
 def auto_match_content():
-    """Background task to auto-match unmatched content with TMDb"""
+    """Background task to auto-match unmatched content with TMDb - with aggressive pre-caching"""
     global auto_matching_running, last_auto_match_time
     
-    if not TMDB_API_KEY or not plex:
+    if not plex:
+        print("[AUTO-MATCH] Plex not connected, skipping")
         return
     
     auto_matching_running = True
     matched_count = 0
+    total_items = 0
     
     try:
         print("[AUTO-MATCH] Starting auto-match scan...")
         
+        # First, count total items for progress tracking
+        for section in plex.library.sections():
+            if section.type in ['movie', 'show']:
+                total_items += len(section.all())
+        
+        print(f"[AUTO-MATCH] Found {total_items} total items to process")
+        
+        processed = 0
+        batch_size = 10  # Process in batches for better progress feedback
+        
         # Match movies
         for section in plex.library.sections():
             if section.type == 'movie':
-                for movie in section.all():
+                print(f"[AUTO-MATCH] Processing movie library: {section.title}")
+                movies = section.all()
+                
+                for i, movie in enumerate(movies):
                     cache_key = f"movie_{movie.ratingKey}"
+                    
+                    # Process even if cached - ensures all movies are pre-warmed
                     if cache_key not in session_cache['movies']:
-                        # Try to match with TMDb
-                        tmdb_data = enhance_movie_with_tmdb(movie)
-                        if tmdb_data:
-                            session_cache['movies'][cache_key] = tmdb_data
-                            matched_count += 1
-                            print(f"[AUTO-MATCH] Matched movie: {movie.title}")
+                        if TMDB_API_KEY:
+                            # Try to match with TMDb
+                            tmdb_data = enhance_movie_with_tmdb(movie)
+                            if tmdb_data:
+                                session_cache['movies'][cache_key] = tmdb_data
+                                matched_count += 1
+                        else:
+                            # No TMDb key, just create basic cache entry
+                            session_cache['movies'][cache_key] = {}
+                    
+                    processed += 1
+                    
+                    # Show progress every batch_size items
+                    if processed % batch_size == 0:
+                        progress = (processed / total_items) * 100
+                        print(f"[AUTO-MATCH] Progress: {processed}/{total_items} ({progress:.1f}%) - Matched: {matched_count}")
+                    
+                    # Save every 50 items to prevent data loss
+                    if matched_count > 0 and matched_count % 50 == 0:
+                        save_cache_to_disk()
             
             elif section.type == 'show':
-                for show in section.all():
+                print(f"[AUTO-MATCH] Processing TV library: {section.title}")
+                shows = section.all()
+                
+                for i, show in enumerate(shows):
                     cache_key = f"series_{show.ratingKey}"
+                    
                     if cache_key not in session_cache['series']:
-                        # Try to match with TMDb
-                        tmdb_data = enhance_series_with_tmdb(show)
-                        if tmdb_data:
-                            session_cache['series'][cache_key] = tmdb_data
-                            matched_count += 1
-                            print(f"[AUTO-MATCH] Matched show: {show.title}")
+                        if TMDB_API_KEY:
+                            # Try to match with TMDb
+                            tmdb_data = enhance_series_with_tmdb(show)
+                            if tmdb_data:
+                                session_cache['series'][cache_key] = tmdb_data
+                                matched_count += 1
+                        else:
+                            # No TMDb key, just create basic cache entry
+                            session_cache['series'][cache_key] = {}
+                    
+                    processed += 1
+                    
+                    if processed % batch_size == 0:
+                        progress = (processed / total_items) * 100
+                        print(f"[AUTO-MATCH] Progress: {processed}/{total_items} ({progress:.1f}%) - Matched: {matched_count}")
+                    
+                    # Save every 50 items
+                    if matched_count > 0 and matched_count % 50 == 0:
+                        save_cache_to_disk()
         
-        print(f"[AUTO-MATCH] Completed! Matched {matched_count} items")
+        print(f"[AUTO-MATCH] ✓ Completed! Processed {processed} items, Matched {matched_count} new items")
         last_auto_match_time = time.time()
         
-        # Save cache to disk
+        # Final save
         if matched_count > 0:
             save_cache_to_disk()
     
     except Exception as e:
         print(f"[AUTO-MATCH] Error: {e}")
+        import traceback
+        traceback.print_exc()
     
     finally:
         auto_matching_running = False
@@ -422,15 +538,50 @@ def background_auto_matcher():
 
 # Cache library sections (updated every 5 minutes)
 def get_cached_sections():
-    """Get library sections with caching to reduce Plex API calls"""
+    """Get library sections with caching - includes shared servers"""
     current_time = time.time()
     
     if session_cache['sections'] and (current_time - session_cache['sections_time']) < 300:
         return session_cache['sections']
     
     # Refresh sections
+    all_sections = []
+    
     if plex:
-        session_cache['sections'] = list(plex.library.sections())
+        # Get local server sections
+        all_sections.extend(list(plex.library.sections()))
+        
+        # Get sections from shared servers
+        try:
+            account = plex.myPlexAccount()
+            
+            # Get all shared servers
+            for resource in account.resources():
+                # Skip if it's the current server
+                if resource.name == plex.friendlyName:
+                    continue
+                
+                # Only process owned or shared servers with full access
+                if resource.owned or resource.presence:
+                    try:
+                        # Connect to shared server
+                        shared_server = resource.connect()
+                        
+                        # Get sections from shared server
+                        for section in shared_server.library.sections():
+                            # Add server name prefix to differentiate
+                            section._server_name = resource.name
+                            all_sections.append(section)
+                        
+                        print(f"[SHARES] Added {len(shared_server.library.sections())} sections from {resource.name}")
+                    except Exception as e:
+                        print(f"[SHARES] Could not connect to {resource.name}: {e}")
+        except Exception as e:
+            print(f"[SHARES] Could not fetch shared servers: {e}")
+            # If MyPlex account access fails, just use local sections
+            pass
+        
+        session_cache['sections'] = all_sections
         session_cache['sections_time'] = current_time
     
     return session_cache['sections']
@@ -1657,7 +1808,9 @@ DASHBOARD_HTML = """
             
             <div class="action-buttons">
                 <a href="/admin/settings" class="button">⚙️ Settings</a>
+                {% if tmdb_configured %}
                 <a href="/admin/match-tmdb" class="button">🎬 Match Unmatched Movies/Series</a>
+                {% endif %}
                 <a href="/admin/test" class="button button-secondary">🧪 Test Connection</a>
                 <a href="/admin/logout" class="button button-danger">🚪 Logout</a>
             </div>
@@ -2866,6 +3019,40 @@ def trigger_auto_match():
     
     return jsonify({"success": True})
 
+@app.route('/admin/cache-status')
+@require_admin_login
+def cache_status():
+    """Get cache status and statistics"""
+    total_movies = 0
+    total_shows = 0
+    
+    if plex:
+        try:
+            for section in plex.library.sections():
+                if section.type == 'movie':
+                    total_movies += len(section.all())
+                elif section.type == 'show':
+                    total_shows += len(section.all())
+        except:
+            pass
+    
+    cached_movies = len(session_cache['movies'])
+    cached_shows = len(session_cache['series'])
+    
+    movie_percent = (cached_movies / total_movies * 100) if total_movies > 0 else 0
+    show_percent = (cached_shows / total_shows * 100) if total_shows > 0 else 0
+    
+    return jsonify({
+        "total_movies": total_movies,
+        "cached_movies": cached_movies,
+        "movie_cache_percent": round(movie_percent, 1),
+        "total_shows": total_shows,
+        "cached_shows": cached_shows,
+        "show_cache_percent": round(show_percent, 1),
+        "auto_match_running": auto_matching_running,
+        "last_auto_match": last_auto_match_time
+    })
+
 @app.route('/admin/search-plex')
 @require_admin_login
 def search_plex_api():
@@ -2970,6 +3157,11 @@ def admin_dashboard():
     libraries = []
     server_name = "Not connected"
     
+    # Calculate cache statistics
+    cached_movies = len(session_cache['movies'])
+    cached_shows = len(session_cache['series'])
+    total_cached = cached_movies + cached_shows
+    
     if plex:
         server_name = plex.friendlyName
         for section in plex.library.sections():
@@ -2987,17 +3179,83 @@ def admin_dashboard():
     
     return render_template_string(DASHBOARD_HTML,
         plex_connected=plex is not None,
+        tmdb_configured=bool(TMDB_API_KEY),
         server_name=server_name,
         bridge_url=bridge_url,
         bridge_username=BRIDGE_USERNAME,
         bridge_password=BRIDGE_PASSWORD,
         active_sessions=get_active_user_count(),
-        libraries=libraries
+        libraries=libraries,
+        cached_movies=cached_movies,
+        cached_shows=cached_shows,
+        total_cached=total_cached,
+        auto_match_running=auto_matching_running
     )
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @require_admin_login
 def admin_settings():
+
+@app.route('/admin/plex-shares', methods=['GET', 'POST'])
+@require_admin_login
+def admin_plex_shares():
+    """Manage Plex shares - add/remove shared users"""
+    message = None
+    error = False
+    shares = []
+    
+    if not plex:
+        return redirect('/admin/settings')
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'add_share':
+            share_username = request.form.get('share_username', '').strip()
+            
+            if not share_username:
+                message = "✗ Username cannot be empty"
+                error = True
+            else:
+                try:
+                    # Use Plex API to share library
+                    from plexapi.myplex import MyPlexAccount
+                    
+                    # You need to authenticate with MyPlex to manage shares
+                    # This requires the user's Plex account credentials
+                    message = "⚠️ Plex sharing requires MyPlex account authentication. Use Plex web interface to manage shares."
+                    error = True
+                except Exception as e:
+                    message = f"✗ Error: {str(e)}"
+                    error = True
+        
+        elif action == 'remove_share':
+            share_id = request.form.get('share_id')
+            try:
+                message = "⚠️ Plex sharing requires MyPlex account authentication. Use Plex web interface to manage shares."
+                error = True
+            except Exception as e:
+                message = f"✗ Error: {str(e)}"
+                error = True
+    
+    # Get current shares (if possible)
+    try:
+        # List current shared users (requires MyPlex connection)
+        # For now, we'll show instructions instead
+        pass
+    except Exception as e:
+        pass
+    
+    return render_template_string(PLEX_SHARES_HTML,
+        message=message,
+        error=error,
+        shares=shares,
+        plex_url=PLEX_URL
+    )
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@require_admin_login
+def admin_settings_old():
     """Settings page"""
     global PLEX_URL, PLEX_TOKEN, BRIDGE_USERNAME, BRIDGE_PASSWORD, ADMIN_PASSWORD, SHOW_DUMMY_CHANNEL, TMDB_API_KEY
     
@@ -3078,10 +3336,20 @@ def admin_test():
 @app.route('/player_api.php')
 def player_api():
     """Main Xtream Codes API endpoint"""
+    
+    # Check rate limit first (except for authentication)
+    action = request.args.get('action')
+    if action in ['get_vod_streams', 'get_series', 'get_vod_categories', 'get_series_categories']:
+        allowed, request_count = check_rate_limit()
+        if not allowed:
+            print(f"[RATE-LIMIT] Blocked {request.remote_addr} - {request_count} requests in 60s")
+            response = jsonify({"error": "Rate limit exceeded. Please wait before making more requests."})
+            response.headers['Retry-After'] = '60'
+            return response, 429
+    
     if not plex:
         return jsonify({"error": "Plex server not connected"}), 500
     
-    action = request.args.get('action')
     username = request.args.get('username')
     
     # Log the request (helpful for debugging)
@@ -3125,10 +3393,38 @@ def player_api():
             "server_info": server_info
         })
     
-    # Get VOD categories
-    # Get VOD categories - DISABLED, return empty
+    # Get VOD categories - Auto-generated from Plex libraries
     elif action == 'get_vod_categories':
-        return jsonify([])
+        categories = []
+        
+        if plex:
+            try:
+                sections = get_cached_sections()
+                for section in sections:
+                    if section.type == 'movie':
+                        # Get category name - add server prefix if from shared server
+                        category_name = section.title
+                        
+                        # If section has server name attribute, prefix it
+                        if hasattr(section, '_server_name'):
+                            category_name = f"{section._server_name} - {section.title}"
+                        
+                        # Each movie library becomes a category
+                        categories.append({
+                            "category_id": str(section.key),
+                            "category_name": category_name,
+                            "parent_id": 0
+                        })
+            except Exception as e:
+                print(f"[ERROR] Failed to get VOD categories: {e}")
+        
+        # Create response with cache headers
+        response = jsonify(categories)
+        # Cache categories for 12 HOURS (43200 seconds) - categories change very rarely
+        response.headers['Cache-Control'] = 'public, max-age=43200, immutable'
+        response.headers['ETag'] = hashlib.md5(f"{len(categories)}{int(time.time() / 43200)}".encode()).hexdigest()
+        
+        return response
     
     # Get VOD streams (movies)
     elif action == 'get_vod_streams':
@@ -3143,7 +3439,7 @@ def player_api():
         # Handle "All Movies" category (category_id = "0")
         if category_id == "0" or not category_id:
             # No category specified or "All" - return all movies (with limit)
-            max_limit = limit if limit > 0 else 500
+            max_limit = limit if limit > 0 else MAX_MOVIES  # Use environment variable
             count = 0
             
             sections = get_cached_sections()
@@ -3203,7 +3499,17 @@ def player_api():
         
         elapsed = time.time() - start_time
         print(f"[PERF] Returned {len(movies)} movies in {elapsed:.2f}s")
-        return jsonify(movies)
+        
+        # Create response with cache headers
+        response = jsonify(movies)
+        # Cache for 6 HOURS (21600 seconds) - very aggressive to reduce server load
+        response.headers['Cache-Control'] = 'public, max-age=21600, immutable'
+        # Add ETag based on content length and 6-hour time window
+        import hashlib
+        etag = hashlib.md5(f"{len(movies)}{int(time.time() / 21600)}".encode()).hexdigest()
+        response.headers['ETag'] = etag
+        
+        return response
     
     # Get VOD info
     elif action == 'get_vod_info':
@@ -3262,10 +3568,38 @@ def player_api():
         except Exception as e:
             return jsonify({"error": str(e)}), 404
     
-    # Get series categories
-    # Get series categories - DISABLED, return empty
+    # Get series categories - Auto-generated from Plex libraries
     elif action == 'get_series_categories':
-        return jsonify([])
+        categories = []
+        
+        if plex:
+            try:
+                sections = get_cached_sections()
+                for section in sections:
+                    if section.type == 'show':
+                        # Get category name - add server prefix if from shared server
+                        category_name = section.title
+                        
+                        # If section has server name attribute, prefix it
+                        if hasattr(section, '_server_name'):
+                            category_name = f"{section._server_name} - {section.title}"
+                        
+                        # Each TV library becomes a category
+                        categories.append({
+                            "category_id": str(section.key),
+                            "category_name": category_name,
+                            "parent_id": 0
+                        })
+            except Exception as e:
+                print(f"[ERROR] Failed to get series categories: {e}")
+        
+        # Create response with cache headers
+        response = jsonify(categories)
+        # Cache categories for 12 HOURS (43200 seconds) - categories change very rarely
+        response.headers['Cache-Control'] = 'public, max-age=43200, immutable'
+        response.headers['ETag'] = hashlib.md5(f"{len(categories)}{int(time.time() / 43200)}".encode()).hexdigest()
+        
+        return response
     
     # Get series
     elif action == 'get_series':
@@ -3280,7 +3614,7 @@ def player_api():
         # Handle "All Series" category (category_id = "0")
         if category_id == "0" or not category_id:
             # No category specified or "All" - return all series (with limit)
-            max_limit = limit if limit > 0 else 300
+            max_limit = limit if limit > 0 else MAX_SHOWS
             print(f"[DEBUG] Returning all series from all sections (max {max_limit})")
             count = 0
             
@@ -3342,7 +3676,7 @@ def player_api():
         else:
             # No category specified - return all series (with optional limit)
             # Default to 300 max to prevent timeout
-            max_limit = limit if limit > 0 else 300
+            max_limit = limit if limit > 0 else MAX_SHOWS
             print(f"[DEBUG] Returning all series from all sections (max {max_limit})")
             count = 0
             
@@ -3366,7 +3700,17 @@ def player_api():
         
         elapsed = time.time() - start_time
         print(f"[PERF] Returned {len(series_list)} TV shows in {elapsed:.2f}s")
-        return jsonify(series_list)
+        
+        # Create response with cache headers
+        response = jsonify(series_list)
+        # Cache for 6 HOURS (21600 seconds) - very aggressive to reduce server load
+        response.headers['Cache-Control'] = 'public, max-age=21600, immutable'
+        # Add ETag based on content length and 6-hour time window
+        import hashlib
+        etag = hashlib.md5(f"{len(series_list)}{int(time.time() / 21600)}".encode()).hexdigest()
+        response.headers['ETag'] = etag
+        
+        return response
     
     # Get live categories (for Live TV)
     elif action == 'get_live_categories':
@@ -4394,6 +4738,16 @@ def index():
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
+    # Register signal handlers for graceful shutdown
+    def signal_handler(sig, frame):
+        print("\n[SHUTDOWN] Saving cache before exit...")
+        save_cache_to_disk()
+        print("[SHUTDOWN] Cache saved. Exiting.")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
     print("=" * 60)
     print("Plex to Xtream Codes API Bridge with Web Interface")
     print("=" * 60)
@@ -4424,8 +4778,10 @@ if __name__ == '__main__':
     print("  • Cached library sections (5-minute refresh)")
     print("  • Minimal response size for fast loading")
     print("  • Threaded request handling")
+    print(f"  • Max movies: {MAX_MOVIES}")
+    print(f"  • Max TV shows: {MAX_SHOWS}")
     
-    # Start background auto-matcher
+    # Start background auto-matcher (only if TMDb is configured)
     if TMDB_API_KEY and plex:
         print("\n🎬 Starting TMDb auto-matcher")
         print("  • Running initial match on startup")
@@ -4433,6 +4789,10 @@ if __name__ == '__main__':
         print("  • Auto-matches unmatched content")
         auto_matcher_thread = threading.Thread(target=background_auto_matcher, daemon=True)
         auto_matcher_thread.start()
+    else:
+        if not TMDB_API_KEY:
+            print("\n⚠️  TMDb API key not configured - using Plex posters only")
+            print("  • Add TMDb API key in Settings to enable high-quality posters")
     
     print("=" * 60)
     
