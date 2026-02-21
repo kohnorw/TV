@@ -3192,70 +3192,47 @@ def admin_dashboard():
         auto_match_running=auto_matching_running
     )
 
+@app.route('/admin/plex-users')
+@require_admin_login
+def admin_plex_users():
+    """Manage Plex user access - show how users can access the bridge"""
+    
+    # Get Plex users (requires server connection)
+    plex_users = []
+    managed_users = []
+    
+    if plex:
+        try:
+            # Get home users (managed accounts)
+            account = plex.myPlexAccount()
+            home_users = account.users()
+            
+            for user in home_users:
+                managed_users.append({
+                    'username': user.username or user.email or user.title,
+                    'email': user.email,
+                    'restricted': user.restricted if hasattr(user, 'restricted') else False
+                })
+        except Exception as e:
+            print(f"[ERROR] Could not fetch Plex users: {e}")
+    
+    # Get server IP
+    import socket
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    bridge_url = f"http://{local_ip}:{BRIDGE_PORT}"
+    
+    return jsonify({
+        "bridge_url": bridge_url,
+        "bridge_username": BRIDGE_USERNAME,
+        "bridge_password": BRIDGE_PASSWORD,
+        "managed_users": managed_users,
+        "plex_url": PLEX_URL
+    })
+
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @require_admin_login
 def admin_settings():
-
-@app.route('/admin/plex-shares', methods=['GET', 'POST'])
-@require_admin_login
-def admin_plex_shares():
-    """Manage Plex shares - add/remove shared users"""
-    message = None
-    error = False
-    shares = []
-    
-    if not plex:
-        return redirect('/admin/settings')
-    
-    if request.method == 'POST':
-        action = request.form.get('action')
-        
-        if action == 'add_share':
-            share_username = request.form.get('share_username', '').strip()
-            
-            if not share_username:
-                message = "✗ Username cannot be empty"
-                error = True
-            else:
-                try:
-                    # Use Plex API to share library
-                    from plexapi.myplex import MyPlexAccount
-                    
-                    # You need to authenticate with MyPlex to manage shares
-                    # This requires the user's Plex account credentials
-                    message = "⚠️ Plex sharing requires MyPlex account authentication. Use Plex web interface to manage shares."
-                    error = True
-                except Exception as e:
-                    message = f"✗ Error: {str(e)}"
-                    error = True
-        
-        elif action == 'remove_share':
-            share_id = request.form.get('share_id')
-            try:
-                message = "⚠️ Plex sharing requires MyPlex account authentication. Use Plex web interface to manage shares."
-                error = True
-            except Exception as e:
-                message = f"✗ Error: {str(e)}"
-                error = True
-    
-    # Get current shares (if possible)
-    try:
-        # List current shared users (requires MyPlex connection)
-        # For now, we'll show instructions instead
-        pass
-    except Exception as e:
-        pass
-    
-    return render_template_string(PLEX_SHARES_HTML,
-        message=message,
-        error=error,
-        shares=shares,
-        plex_url=PLEX_URL
-    )
-
-@app.route('/admin/settings', methods=['GET', 'POST'])
-@require_admin_login
-def admin_settings_old():
     """Settings page"""
     global PLEX_URL, PLEX_TOKEN, BRIDGE_USERNAME, BRIDGE_PASSWORD, ADMIN_PASSWORD, SHOW_DUMMY_CHANNEL, TMDB_API_KEY
     
